@@ -192,3 +192,6 @@ main{min-height:570px}
   .footer{display:block}
   .footer span{display:block;margin:4px 0}
 }
+
+/* v1.0 additions */
+.title-actions{display:flex;align-items:center;gap:14px}.lang-switch{display:flex;align-items:center;gap:5px;font-size:11px;color:#aab0b8}.lang-switch button{border:0;background:transparent;color:#89919b;padding:3px 4px;cursor:pointer}.lang-switch button.active{color:#f1f2f3;text-decoration:underline}.chart-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:18px}.chart-card{border:1px solid var(--line);background:#101318;padding:12px;min-width:0}.chart-card h3{font-size:13px;margin:0 0 10px}.chart-card canvas{width:100%;height:240px;display:block;background:#0a0c0f;border:1px solid #262c34}.syntax{background:#090b0e;border:1px solid var(--line);padding:14px;color:#cfd5da;overflow:auto}.think-line.research{color:#9cc9d5}@media(max-width:900px){.chart-grid{grid-template-columns:1fr}}

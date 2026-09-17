@@ -4,64 +4,58 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="theme-color" content="#0d0f12">
-  <meta name="description" content="FAILED Calculator — калькулятор, который сам учит математику и постепенно её забывает.">
+  <meta name="description" content="FAILED Calculator — a calculator that discovers mathematics, builds memory, and slowly forgets it.">
   <title>FAILED Calculator — dementia build</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
 <div class="shell">
   <header class="titlebar">
-    <strong>FAILED_CALCULATOR.EXE — dementia build 0.8</strong>
-    <div class="window-buttons" aria-hidden="true"><i></i><i></i><i></i></div>
+    <strong>FAILED_CALCULATOR.EXE — dementia build 1.0</strong>
+    <div class="title-actions">
+      <div class="lang-switch" aria-label="Language">
+        <button id="langRu">RU</button><span>/</span><button id="langEn">EN</button>
+      </div>
+      <div class="window-buttons" aria-hidden="true"><i></i><i></i><i></i></div>
+    </div>
   </header>
 
   <section class="hero">
     <div class="brand">
-      <div class="kicker">НЕЙРОДЕГЕНЕРАТИВНАЯ АРИФМЕТИЧЕСКАЯ СИСТЕМА</div>
+      <div class="kicker" data-i18n="kicker"></div>
       <h1>FAILED <span>CALCULATOR</span></h1>
-      <p>
-        Пишите выражение целиком. Калькулятор начинает сеанс без математики,
-        открывает операции прямо по ходу работы, строит себе таблицы, запоминает странные случаи —
-        а затем постепенно теряет ячейки, понятия и целые разделы собственного образования.
-      </p>
+      <p data-i18n="hero"></p>
     </div>
-
-    <aside class="brain" aria-label="Состояние памяти">
-      <div class="brain-row"><span>состояние</span><b id="brainState">ПУСТ</b></div>
-      <div class="brain-row"><span>здоровье памяти</span><b id="brainHealth">100%</b></div>
-      <div class="brain-row"><span>понятий помнит</span><b id="knownConcepts">0</b></div>
-      <div class="brain-row"><span>следующий эпизод</span><b id="decayCountdown">--:--</b></div>
+    <aside class="brain">
+      <div class="brain-row"><span data-i18n="status"></span><b id="brainState"></b></div>
+      <div class="brain-row"><span data-i18n="memoryHealth"></span><b id="brainHealth">100%</b></div>
+      <div class="brain-row"><span data-i18n="knownConcepts"></span><b id="knownConcepts">0</b></div>
+      <div class="brain-row"><span data-i18n="nextEpisode"></span><b id="decayCountdown">--:--</b></div>
       <div class="health-track"><div class="health-fill" id="healthFill"></div></div>
     </aside>
   </section>
 
-  <nav class="tabs" aria-label="Разделы">
-    <button class="active" data-tab="calculator">КАЛЬКУЛЯТОР</button>
-    <button data-tab="memory">ПАМЯТЬ</button>
-    <button data-tab="observer">ЖУРНАЛ НАБЛЮДАТЕЛЯ</button>
-    <button data-tab="dementia">ДЕМЕНЦИЯ</button>
-    <button data-tab="about">О ПРОЕКТЕ</button>
+  <nav class="tabs">
+    <button class="active" data-tab="calculator" data-i18n="tabCalculator"></button>
+    <button data-tab="memory" data-i18n="tabMemory"></button>
+    <button data-tab="charts" data-i18n="tabCharts"></button>
+    <button data-tab="observer" data-i18n="tabObserver"></button>
+    <button data-tab="dementia" data-i18n="tabDementia"></button>
+    <button data-tab="about" data-i18n="tabAbout"></button>
   </nav>
 
   <main>
     <section id="calculator" class="tab active">
       <div class="calculator-grid">
         <article class="card">
-          <h2>МАТЕМАТИЧЕСКИЙ ОПЫТ</h2>
-
+          <h2 data-i18n="experienceTitle"></h2>
           <div class="expression-row">
-            <input
-              id="expression"
-              autocomplete="off"
-              spellcheck="false"
-              placeholder="например: 2 + 5i"
-              aria-label="Математическое выражение"
-            >
-            <button id="calculate" class="primary">ДУМАТЬ</button>
+            <input id="expression" autocomplete="off" spellcheck="false" data-i18n-placeholder="expressionPlaceholder">
+            <button id="calculate" class="primary" data-i18n="thinkButton"></button>
           </div>
 
           <div class="examples">
-            <span>попробуйте:</span>
+            <span data-i18n="tryExamples"></span>
             <button data-expr="2+2">2+2</button>
             <button data-expr="7*8">7*8</button>
             <button data-expr="2+5i">2+5i</button>
@@ -73,26 +67,18 @@
 
           <div class="progress-wrap" id="progressWrap">
             <div class="progress"><div id="progressBar"></div></div>
-            <div class="progress-label" id="progressLabel">думаю...</div>
+            <div class="progress-label" id="progressLabel"></div>
           </div>
 
           <div class="thinking" id="thinking">
-            <div class="thinking-placeholder">
-              Внутренний монолог появится здесь.
-            </div>
+            <div class="thinking-placeholder" data-i18n="thinkingPlaceholder"></div>
           </div>
-
-          <div class="result" id="result">
-            МОЗГ ПУСТ.<br>
-            Я пока не знаю даже, что означает знак «+».
-          </div>
+          <div class="result" id="result"></div>
         </article>
 
         <aside class="card concepts-card">
-          <h2>ЧТО ОН СЕЙЧАС ПОМНИТ</h2>
-          <div id="conceptList" class="concept-list">
-            <div class="empty-state">пока ничего</div>
-          </div>
+          <h2 data-i18n="rememberTitle"></h2>
+          <div id="conceptList" class="concept-list"></div>
         </aside>
       </div>
     </section>
@@ -101,53 +87,54 @@
       <article class="card">
         <div class="memory-header">
           <div>
-            <h2>ВНУТРЕННЯЯ ПАМЯТЬ</h2>
-            <p class="muted">
-              Ячейки тускнеют по мере деградации и исчезают, когда забыты.
-            </p>
+            <h2 data-i18n="internalMemory"></h2>
+            <p class="muted" data-i18n="memorySubtitle"></p>
           </div>
-          <select id="memoryConcept" aria-label="Выбрать понятие"></select>
+          <select id="memoryConcept"></select>
         </div>
-
         <div id="memorySummary" class="memory-summary"></div>
         <div id="memoryTableWrap" class="memory-table-wrap"></div>
         <div id="episodeList" class="episode-list"></div>
       </article>
     </section>
 
+    <section id="charts" class="tab">
+      <article class="card">
+        <h2 data-i18n="chartsTitle"></h2>
+        <p class="muted" data-i18n="chartsSubtitle"></p>
+        <div class="chart-grid">
+          <div class="chart-card"><h3 data-i18n="chartHealth"></h3><canvas id="healthChart" width="720" height="240"></canvas></div>
+          <div class="chart-card"><h3 data-i18n="chartKnowledge"></h3><canvas id="knowledgeChart" width="720" height="240"></canvas></div>
+          <div class="chart-card"><h3 data-i18n="chartConcepts"></h3><canvas id="conceptChart" width="720" height="240"></canvas></div>
+          <div class="chart-card"><h3 data-i18n="chartDecay"></h3><canvas id="decayChart" width="720" height="240"></canvas></div>
+        </div>
+      </article>
+    </section>
+
     <section id="observer" class="tab">
       <article class="card">
-        <h2>ЖУРНАЛ ВНЕШНЕГО НАБЛЮДАТЕЛЯ</h2>
-        <p class="muted">
-          Этот журнал находится «снаружи мозга» и поэтому переживает его забывание.
-        </p>
+        <h2 data-i18n="observerTitle"></h2>
+        <p class="muted" data-i18n="observerSubtitle"></p>
         <div id="observerLog" class="log"></div>
       </article>
     </section>
 
     <section id="dementia" class="tab">
       <article class="card">
-        <h2>ПАРАМЕТРЫ КОГНИТИВНОГО РАСПАДА</h2>
-
+        <h2 data-i18n="dementiaTitle"></h2>
         <div class="settings-grid">
           <label class="setting">
-            <span>Средний интервал между приступами:</span>
-            <b id="decayIntervalLabel"></b>
-            <small>
-              Приступ не стирает мозг целиком: он повреждает случайные понятия,
-              ослабляет воспоминания и вырывает отдельные ячейки таблиц.
-            </small>
-            <input id="decayInterval" type="range" min="8" max="120" step="2">
+            <span data-i18n="decayInterval"></span> <b id="decayIntervalLabel"></b>
+            <small data-i18n="decayHelp"></small>
+            <input id="decayInterval" type="range" min="12" max="180" step="3">
           </label>
-
           <div class="dementia-actions">
-            <button id="damageBrain" class="warning">ВЫЗВАТЬ ПРИСТУП</button>
-            <button id="resetBrain" class="danger">ПОЛНАЯ ЛОБОТОМИЯ</button>
+            <button id="damageBrain" class="warning" data-i18n="triggerEpisode"></button>
+            <button id="resetBrain" class="danger" data-i18n="lobotomy"></button>
           </div>
         </div>
-
         <div class="stage-panel">
-          <div><span>Текущая стадия:</span><b id="stageName"></b></div>
+          <div><span data-i18n="currentStage"></span><b id="stageName"></b></div>
           <p id="stageDescription"></p>
         </div>
       </article>
@@ -155,42 +142,28 @@
 
     <section id="about" class="tab">
       <article class="card about">
-        <h2>ЧТО ОН ПОНИМАЕТ</h2>
-        <p>
-          Синтаксис специально похож на обычные математические калькуляторы:
-          <code>+ - * / % ^ !</code>, скобки, неявное умножение вроде
-          <code>2i</code> и <code>2(3+4)</code>, константы
-          <code>pi</code>, <code>e</code>, <code>i</code>, а также
-          <code>sqrt</code>, <code>abs</code>, <code>sin</code>, <code>cos</code>,
-          <code>tan</code>, <code>ln</code>, <code>log</code>, <code>exp</code>.
-        </p>
-        <p>
-          Комплексные числа не считаются ошибкой. Если калькулятор впервые встречает
-          <code>i</code>, он действительно на несколько секунд впадает в осадок,
-          переосмысливает устройство числовой прямой и только после этого продолжает.
-        </p>
-        <p>
-          Для небольших целых операндов он строит таблицы результатов.
-          Для комплексных, дробных и слишком больших значений сохраняет отдельные эпизоды.
-          Повторный пример старается достать из памяти, а не «открыть» заново.
-        </p>
-        <p>
-          Память хранится только в <code>sessionStorage</code>. Поэтому новый посетитель
-          начинает с пустого калькулятора; обновление страницы в той же вкладке сохраняет
-          текущую историю его обучения.
-        </p>
+        <h2 data-i18n="aboutTitle"></h2>
+        <p data-i18n="aboutP1"></p>
+        <p data-i18n="aboutP2"></p>
+        <p data-i18n="aboutP3"></p>
+        <pre class="syntax">+  -  *  /  %  ^  !
+( )
+2i   2pi   2(3+4)
+pi   e   i
+sqrt(x)  abs(x)
+sin(x)   cos(x)   tan(x)
+ln(x)    log(x)   exp(x)</pre>
+        <p data-i18n="aboutP4"></p>
       </article>
     </section>
   </main>
 
   <footer class="footer">
-    <span>FAILED Calculator / dementia build 0.8</span>
-    <span>no framework · no backend · GitHub Pages</span>
+    <span>FAILED Calculator / dementia build 1.0</span>
+    <span data-i18n="footer"></span>
   </footer>
 </div>
-
 <div id="toast" class="toast" role="status"></div>
-
 <script src="app.js"></script>
 </body>
 </html>

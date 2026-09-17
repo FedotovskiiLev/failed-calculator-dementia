@@ -2,1129 +2,545 @@
 "use strict";
 
 /* ============================================================
-   FAILED CALCULATOR — dementia build
-   No eval(), no math library, no framework.
+   FAILED CALCULATOR 1.0
+
+   The expression evaluator deliberately does not dispatch an
+   expression straight to JavaScript arithmetic or eval().
+
+   Small integer arithmetic is learned as explicit tables.
+   New table cells are derived from rules the calculator has
+   discovered: successor/predecessor for addition, repeated
+   addition for multiplication, repeated subtraction/long
+   division for division, etc.
+
+   Transcendental functions are approximated with iterations and
+   series. Complex arithmetic is decomposed into real operations.
+   JavaScript numbers remain the physical substrate of the browser,
+   but there is no "native calculator" shortcut for the answer.
    ============================================================ */
 
-const BRAIN_KEY = "failed-calculator-brain-v2";
-const LOG_KEY = "failed-calculator-observer-log-v2";
+const BRAIN_KEY = "failed-calculator-brain-v3";
+const LOG_KEY = "failed-calculator-observer-log-v3";
+const STATS_KEY = "failed-calculator-stats-v3";
+const LANG_KEY = "failed-calculator-language";
 const TABLE_LIMIT = 18;
 const TABLE_VIEW_LIMIT = 17;
 
 const $ = id => document.getElementById(id);
-const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
-const clamp = (n,a,b) => Math.max(a, Math.min(b,n));
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const clamp = (n,a,b) => n<a?a:n>b?b:n;
+const absN = n => n < 0 ? -n : n;
 
-/* -------------------------- Complex -------------------------- */
+const I18N = {
+  ru: {
+    kicker:"НЕЙРОДЕГЕНЕРАТИВНАЯ АРИФМЕТИЧЕСКАЯ СИСТЕМА",
+    hero:"Пишите выражение целиком. Калькулятор начинает сеанс без математики, открывает правила по ходу работы, строит таблицы и алгоритмы, а затем постепенно теряет ячейки, понятия и целые разделы собственного образования.",
+    status:"состояние", memoryHealth:"здоровье памяти", knownConcepts:"понятий помнит", nextEpisode:"следующий эпизод",
+    tabCalculator:"КАЛЬКУЛЯТОР", tabMemory:"ПАМЯТЬ", tabCharts:"ГРАФИКИ", tabObserver:"ЖУРНАЛ НАБЛЮДАТЕЛЯ", tabDementia:"ДЕМЕНЦИЯ", tabAbout:"О ПРОЕКТЕ",
+    experienceTitle:"МАТЕМАТИЧЕСКИЙ ОПЫТ", expressionPlaceholder:"например: 2 + 5i", thinkButton:"ДУМАТЬ", tryExamples:"попробуйте:", thinkingPlaceholder:"Внутренний монолог появится здесь.", rememberTitle:"ЧТО ОН СЕЙЧАС ПОМНИТ",
+    internalMemory:"ВНУТРЕННЯЯ ПАМЯТЬ", memorySubtitle:"Ячейки тускнеют по мере деградации и исчезают, когда забыты.",
+    chartsTitle:"ГРАФИКИ КОГНИТИВНОЙ ЖИЗНИ", chartsSubtitle:"Данные записывает внешний наблюдатель, поэтому история переживает приступы забывания.",
+    chartHealth:"Целостность памяти", chartKnowledge:"Количество сохранённых знаний", chartConcepts:"Число известных понятий", chartDecay:"Накопленные приступы деменции",
+    observerTitle:"ЖУРНАЛ ВНЕШНЕГО НАБЛЮДАТЕЛЯ", observerSubtitle:"Журнал находится «снаружи мозга» и переживает его забывание.",
+    dementiaTitle:"ПАРАМЕТРЫ КОГНИТИВНОГО РАСПАДА", decayInterval:"Средний интервал между приступами:", decayHelp:"Приступ повреждает случайные понятия, ослабляет воспоминания и вырывает отдельные ячейки таблиц.", triggerEpisode:"ВЫЗВАТЬ ПРИСТУП", lobotomy:"ПОЛНАЯ ЛОБОТОМИЯ", currentStage:"Текущая стадия:",
+    aboutTitle:"КАК ЭТО РАБОТАЕТ",
+    aboutP1:"Это не обычный калькулятор с театральной задержкой. Он действительно хранит приобретённые таблицы и алгоритмические знания в памяти сеанса и старается выводить новое из уже открытого.",
+    aboutP2:"Сложение маленьких целых строится рекуррентно через следующий элемент; умножение выводится из повторного сложения; деление — из длинного деления; степень и факториал — из умножения. Трансцендентные функции исследуются итерациями и рядами, а комплексная арифметика раскладывается на уже изученные операции над действительными частями.",
+    aboutP3:"Поэтому первое знакомство с новой математикой действительно занимает время. Повторные примеры обычно становятся быстрее — пока деменция не вырвет нужные куски памяти.",
+    aboutP4:"Состояние мозга хранится только в sessionStorage: новый посетитель начинает с нуля, обновление той же вкладки сохраняет текущую личность калькулятора.",
+    footer:"без фреймворков · без backend · public-repo friendly",
+    emptyBrain:"МОЗГ ПУСТ.\nЯ пока не знаю даже, что означает знак «+».", empty:"пока ничего", memoryEmpty:"память пуста", noTables:"таблиц нет", episodes:"Эпизодические воспоминания",
+    stage0:"почти ясное сознание", stage0d:"Большая часть приобретённых знаний ещё держится.", stage1:"лёгкая забывчивость", stage1d:"Отдельные ячейки таблиц начинают тускнеть и выпадать.", stage2:"фрагментация памяти", stage2d:"Некоторые операции узнаются не сразу; таблицы становятся дырявыми.", stage3:"тяжёлая деградация", stage3d:"Сохранились обрывки правил и отдельные эпизоды. Знакомые знаки иногда кажутся новыми.", stage4:"почти полная амнезия", stage4d:"Остатки математики держатся на нескольких случайных воспоминаниях."
+  },
+  en: {
+    kicker:"NEURODEGENERATIVE ARITHMETIC SYSTEM",
+    hero:"Type a whole expression. The calculator starts each session without mathematics, discovers rules while working, builds tables and algorithms, and then gradually loses cells, concepts, and entire parts of its education.",
+    status:"state", memoryHealth:"memory health", knownConcepts:"known concepts", nextEpisode:"next episode",
+    tabCalculator:"CALCULATOR", tabMemory:"MEMORY", tabCharts:"CHARTS", tabObserver:"OBSERVER LOG", tabDementia:"DEMENTIA", tabAbout:"ABOUT",
+    experienceTitle:"MATHEMATICAL EXPERIENCE", expressionPlaceholder:"for example: 2 + 5i", thinkButton:"THINK", tryExamples:"try:", thinkingPlaceholder:"The internal monologue will appear here.", rememberTitle:"WHAT IT REMEMBERS NOW",
+    internalMemory:"INTERNAL MEMORY", memorySubtitle:"Cells fade as memory degrades and disappear when forgotten.",
+    chartsTitle:"CHARTS OF COGNITIVE LIFE", chartsSubtitle:"Measurements are kept by an external observer, so their history survives memory-loss episodes.",
+    chartHealth:"Memory integrity", chartKnowledge:"Stored knowledge", chartConcepts:"Known concepts", chartDecay:"Cumulative dementia episodes",
+    observerTitle:"EXTERNAL OBSERVER LOG", observerSubtitle:"This log exists outside the brain and survives forgetting.",
+    dementiaTitle:"COGNITIVE DECAY PARAMETERS", decayInterval:"Average time between episodes:", decayHelp:"An episode damages random concepts, weakens memories, and tears individual cells out of learned tables.", triggerEpisode:"TRIGGER EPISODE", lobotomy:"FULL LOBOTOMY", currentStage:"Current stage:",
+    aboutTitle:"HOW IT WORKS",
+    aboutP1:"This is not a normal calculator with theatrical delays. It actually stores acquired tables and algorithmic knowledge in session memory and tries to derive new results from what it has already discovered.",
+    aboutP2:"Small-integer addition is constructed recursively through successor steps; multiplication is derived from repeated addition; division from long division; powers and factorials from multiplication. Transcendental functions are researched with iterations and series, while complex arithmetic is reduced to already learned real operations.",
+    aboutP3:"That is why the first encounter with new mathematics genuinely takes time. Repeated examples usually become faster — until dementia removes the pieces of memory they depend on.",
+    aboutP4:"The brain exists only in sessionStorage: each new visitor starts from zero, while reloading the same tab keeps that calculator's current personality.",
+    footer:"no framework · no backend · public-repo friendly",
+    emptyBrain:"EMPTY BRAIN.\nI do not even know what the “+” sign means yet.", empty:"nothing yet", memoryEmpty:"empty memory", noTables:"no tables", episodes:"Episodic memories",
+    stage0:"almost clear", stage0d:"Most acquired knowledge is still intact.", stage1:"mild forgetfulness", stage1d:"Individual table cells begin to fade and disappear.", stage2:"fragmented memory", stage2d:"Some operations are not recognized immediately; tables develop holes.", stage3:"severe degradation", stage3d:"Only fragments of rules and isolated episodes remain. Familiar symbols may look new.", stage4:"near-total amnesia", stage4d:"The remains of mathematics survive in only a few random memories."
+  }
+};
 
+let lang = localStorage.getItem(LANG_KEY) || (navigator.language?.toLowerCase().startsWith("ru") ? "ru" : "en");
+const tr = key => I18N[lang][key] ?? I18N.ru[key] ?? key;
+const L = (ru,en) => lang === "ru" ? ru : en;
+
+/* ----------------------------- complex ----------------------------- */
 class Complex {
-  constructor(re=0, im=0) {
-    this.re = Number(re);
-    this.im = Number(im);
-  }
-  static from(v) {
-    if (v instanceof Complex) return v;
-    return new Complex(Number(v), 0);
-  }
-  add(v) { v=Complex.from(v); return new Complex(this.re+v.re, this.im+v.im); }
-  sub(v) { v=Complex.from(v); return new Complex(this.re-v.re, this.im-v.im); }
-  neg() { return new Complex(-this.re, -this.im); }
-  mul(v) {
-    v=Complex.from(v);
-    return new Complex(this.re*v.re-this.im*v.im, this.re*v.im+this.im*v.re);
-  }
-  div(v) {
-    v=Complex.from(v);
-    const d=v.re*v.re+v.im*v.im;
-    if (d === 0) return new Complex(NaN,NaN);
-    return new Complex((this.re*v.re+this.im*v.im)/d,(this.im*v.re-this.re*v.im)/d);
-  }
-  abs() { return Math.hypot(this.re,this.im); }
-  arg() { return Math.atan2(this.im,this.re); }
-  log() {
-    return new Complex(Math.log(this.abs()), this.arg());
-  }
-  exp() {
-    const e=Math.exp(this.re);
-    return new Complex(e*Math.cos(this.im), e*Math.sin(this.im));
-  }
-  pow(v) {
-    v=Complex.from(v);
-    if (this.re===0 && this.im===0 && v.im===0 && v.re>0) return new Complex(0,0);
-    return this.log().mul(v).exp();
-  }
-  sqrt() {
-    if (this.im === 0 && this.re >= 0) return new Complex(Math.sqrt(this.re),0);
-    const r=this.abs();
-    const re=Math.sqrt((r+this.re)/2);
-    const im=Math.sign(this.im || 1)*Math.sqrt((r-this.re)/2);
-    return new Complex(re,im);
-  }
-  sin() {
-    return new Complex(
-      Math.sin(this.re)*Math.cosh(this.im),
-      Math.cos(this.re)*Math.sinh(this.im)
-    );
-  }
-  cos() {
-    return new Complex(
-      Math.cos(this.re)*Math.cosh(this.im),
-      -Math.sin(this.re)*Math.sinh(this.im)
-    );
-  }
-  tan() { return this.sin().div(this.cos()); }
-  isReal(eps=1e-11) { return Math.abs(this.im) < eps; }
-  isFinite() { return Number.isFinite(this.re) && Number.isFinite(this.im); }
+  constructor(re=0,im=0){ this.re=Number(re); this.im=Number(im); }
+  static from(v){ return v instanceof Complex ? v : new Complex(Number(v),0); }
+  isReal(eps=1e-10){ return absN(this.im) < eps; }
+  isFinite(){ return Number.isFinite(this.re) && Number.isFinite(this.im); }
 }
+const ser = z => { z=Complex.from(z); return {re:z.re,im:z.im}; };
+const de = v => new Complex(v.re,v.im);
+function clean(n){ if(absN(n)<1e-12)return 0; const x=Number(n.toPrecision(12)); return Object.is(x,-0)?0:x; }
+function fmt(z){
+  z=Complex.from(z); const re=clean(z.re), im=clean(z.im);
+  if(!Number.isFinite(re)||!Number.isFinite(im)) return L("не определено","undefined");
+  if(absN(im)<1e-10) return String(re);
+  if(absN(re)<1e-10){ if(im===1)return"i"; if(im===-1)return"-i"; return `${im}i`; }
+  const sign=im>=0?"+":"−", mag=absN(im); return `${re} ${sign} ${mag===1?"i":`${mag}i`}`;
+}
+const hashZ = z => { z=Complex.from(z); return `${clean(z.re)}:${clean(z.im)}`; };
 
-function serializeComplex(z) {
-  z=Complex.from(z);
-  return {re:z.re, im:z.im};
-}
-function deserializeComplex(v) {
-  return new Complex(v.re,v.im);
-}
-function roundClean(n) {
-  if (Math.abs(n) < 1e-12) return 0;
-  const rounded = Number(n.toPrecision(12));
-  return Object.is(rounded,-0) ? 0 : rounded;
-}
-function fmt(z) {
-  z=Complex.from(z);
-  const re=roundClean(z.re);
-  const im=roundClean(z.im);
-
-  if (!Number.isFinite(re) || !Number.isFinite(im)) return "не определено";
-  if (Math.abs(im) < 1e-11) return String(re);
-  if (Math.abs(re) < 1e-11) {
-    if (im===1) return "i";
-    if (im===-1) return "-i";
-    return `${im}i`;
-  }
-
-  const sign=im>=0?"+":"−";
-  const mag=Math.abs(im);
-  const imText=mag===1?"i":`${mag}i`;
-  return `${re} ${sign} ${imText}`;
-}
-function complexHash(z) {
-  z=Complex.from(z);
-  return `${roundClean(z.re)}:${roundClean(z.im)}`;
-}
-
-/* --------------------------- Parser -------------------------- */
-
+/* ------------------------------ parser ----------------------------- */
 const FUNCTIONS = new Set(["sqrt","abs","sin","cos","tan","ln","log","exp"]);
 const CONSTANTS = new Set(["pi","e","i"]);
-
-function normalizeExpression(s) {
-  return s
-    .replaceAll("π","pi")
-    .replaceAll("×","*")
-    .replaceAll("·","*")
-    .replaceAll("÷","/")
-    .replaceAll("−","-")
-    .replaceAll("**","^")
-    .trim();
-}
-
-function tokenize(source) {
-  source=normalizeExpression(source);
-  const raw=[];
-  let i=0;
-
-  while (i<source.length) {
-    const c=source[i];
-
-    if (/\s/.test(c)) { i++; continue; }
-
-    const number=source.slice(i).match(/^(?:\d+(?:\.\d*)?|\.\d+)(?:e[+-]?\d+)?/i);
-    if (number) {
-      raw.push({type:"number",value:number[0]});
-      i+=number[0].length;
-      continue;
-    }
-
-    const ident=source.slice(i).match(/^[A-Za-z_][A-Za-z0-9_]*/);
-    if (ident) {
-      raw.push({type:"ident",value:ident[0].toLowerCase()});
-      i+=ident[0].length;
-      continue;
-    }
-
-    if ("+-*/%^!(),".includes(c)) {
-      raw.push({type:c,value:c});
-      i++;
-      continue;
-    }
-
-    throw new Error(`не понимаю символ «${c}»`);
+function normalize(s){ return s.replaceAll("π","pi").replaceAll("×","*").replaceAll("·","*").replaceAll("÷","/").replaceAll("−","-").replaceAll("**","^").trim(); }
+function canEnd(t){ return ["number","ident",")","!"].includes(t.type); }
+function canStart(t){ return ["number","ident","("].includes(t.type); }
+function tokenize(source){
+  source=normalize(source); const raw=[]; let i=0;
+  while(i<source.length){
+    const c=source[i]; if(/\s/.test(c)){i++;continue;}
+    const num=source.slice(i).match(/^(?:\d+(?:\.\d*)?|\.\d+)(?:e[+-]?\d+)?/i);
+    if(num){ raw.push({type:"number",value:num[0]}); i+=num[0].length; continue; }
+    const id=source.slice(i).match(/^[A-Za-z_][A-Za-z0-9_]*/);
+    if(id){ raw.push({type:"ident",value:id[0].toLowerCase()}); i+=id[0].length; continue; }
+    if("+-*/%^!(),".includes(c)){ raw.push({type:c,value:c}); i++; continue; }
+    throw new Error(L(`не понимаю символ «${c}»`,`I do not understand the symbol “${c}”`));
   }
-
-  // Implicit multiplication: 2i, 2pi, 2(3+4), (1+i)(1-i), 3sin(pi).
   const out=[];
-  for (let j=0;j<raw.length;j++) {
-    const cur=raw[j];
+  for(const cur of raw){
     const prev=out[out.length-1];
-
-    if (prev && needsImplicitMultiplication(prev,cur)) {
-      out.push({type:"*",value:"*",implicit:true});
-    }
+    if(prev && canEnd(prev) && canStart(cur) && !(prev.type==="ident" && FUNCTIONS.has(prev.value) && cur.type==="(")) out.push({type:"*",value:"*",implicit:true});
     out.push(cur);
   }
-
-  out.push({type:"EOF",value:"EOF"});
-  return out;
+  out.push({type:"EOF",value:"EOF"}); return out;
 }
-
-function canEndAtom(t) {
-  return t.type==="number" || t.type==="ident" || t.type===")" || t.type==="!";
-}
-function canStartAtom(t) {
-  return t.type==="number" || t.type==="ident" || t.type==="(";
-}
-function needsImplicitMultiplication(prev,cur) {
-  if (!canEndAtom(prev) || !canStartAtom(cur)) return false;
-  if (prev.type==="ident" && FUNCTIONS.has(prev.value) && cur.type==="(") return false;
-  return true;
-}
-
-class Parser {
-  constructor(tokens) { this.tokens=tokens; this.pos=0; }
-  peek() { return this.tokens[this.pos]; }
-  next() { return this.tokens[this.pos++]; }
-  match(type) {
-    if (this.peek().type===type) { this.pos++; return true; }
-    return false;
-  }
-  expect(type) {
-    const t=this.next();
-    if (t.type!==type) throw new Error(`ожидал «${type}», но увидел «${t.value}»`);
-    return t;
-  }
-  parse() {
-    const node=this.parseAdd();
-    if (this.peek().type!=="EOF") throw new Error(`лишнее после выражения: «${this.peek().value}»`);
-    return node;
-  }
-  parseAdd() {
-    let node=this.parseMul();
-    while (this.peek().type==="+" || this.peek().type==="-") {
-      const op=this.next().type;
-      node={type:"binary",op,left:node,right:this.parseMul()};
-    }
-    return node;
-  }
-  parseMul() {
-    let node=this.parseUnary();
-    while (["*","/","%"].includes(this.peek().type)) {
-      const op=this.next().type;
-      node={type:"binary",op,left:node,right:this.parseUnary()};
-    }
-    return node;
-  }
-  parseUnary() {
-    if (this.match("+")) return {type:"unary",op:"+",arg:this.parseUnary()};
-    if (this.match("-")) return {type:"unary",op:"-",arg:this.parseUnary()};
-    return this.parsePower();
-  }
-  parsePower() {
-    let node=this.parsePostfix();
-    if (this.match("^")) {
-      node={type:"binary",op:"^",left:node,right:this.parseUnary()};
-    }
-    return node;
-  }
-  parsePostfix() {
-    let node=this.parsePrimary();
-    while (this.match("!")) node={type:"postfix",op:"!",arg:node};
-    return node;
-  }
-  parsePrimary() {
+class Parser{
+  constructor(tokens){this.t=tokens;this.p=0} peek(){return this.t[this.p]} next(){return this.t[this.p++]}
+  match(x){if(this.peek().type===x){this.p++;return true}return false}
+  expect(x){const t=this.next();if(t.type!==x)throw new Error(L(`ожидал «${x}», увидел «${t.value}»`,`expected “${x}”, got “${t.value}”`));return t}
+  parse(){const n=this.add();if(this.peek().type!=="EOF")throw new Error(L("лишний хвост выражения","unexpected expression tail"));return n}
+  add(){let n=this.mul();while(["+","-"].includes(this.peek().type)){const op=this.next().type;n={type:"binary",op,left:n,right:this.mul()}}return n}
+  mul(){let n=this.unary();while(["*","/","%"].includes(this.peek().type)){const op=this.next().type;n={type:"binary",op,left:n,right:this.unary()}}return n}
+  unary(){if(this.match("+"))return{type:"unary",op:"+",arg:this.unary()};if(this.match("-"))return{type:"unary",op:"-",arg:this.unary()};return this.power()}
+  power(){let n=this.postfix();if(this.match("^"))n={type:"binary",op:"^",left:n,right:this.unary()};return n}
+  postfix(){let n=this.primary();while(this.match("!"))n={type:"postfix",op:"!",arg:n};return n}
+  primary(){
     const t=this.peek();
-
-    if (t.type==="number") {
-      this.next();
-      return {type:"number",value:Number(t.value),raw:t.value};
+    if(t.type==="number"){this.next();return{type:"number",value:Number(t.value),raw:t.value}}
+    if(t.type==="ident"){
+      this.next();const name=t.value;
+      if(CONSTANTS.has(name))return{type:"constant",name};
+      if(FUNCTIONS.has(name)){this.expect("(");const arg=this.add();this.expect(")");return{type:"function",name,arg}}
+      throw new Error(L(`не знаю имени «${name}»`,`unknown name “${name}”`));
     }
-
-    if (t.type==="ident") {
-      this.next();
-      const name=t.value;
-
-      if (CONSTANTS.has(name)) return {type:"constant",name};
-
-      if (FUNCTIONS.has(name)) {
-        this.expect("(");
-        const arg=this.parseAdd();
-        this.expect(")");
-        return {type:"function",name,arg};
-      }
-
-      throw new Error(`не знаю имени «${name}»`);
-    }
-
-    if (this.match("(")) {
-      const node=this.parseAdd();
-      this.expect(")");
-      return node;
-    }
-
-    throw new Error(`ожидал число, константу или скобку, но увидел «${t.value}»`);
+    if(this.match("(")){const n=this.add();this.expect(")");return n}
+    throw new Error(L(`ожидал число или скобку, увидел «${t.value}»`,`expected a number or parenthesis, got “${t.value}”`));
   }
 }
 
-/* ------------------------- Brain state ----------------------- */
+/* ----------------------------- concepts ---------------------------- */
+const META = {
+  add:{kind:"op",symbol:"+",ru:"сложение",en:"addition"}, sub:{kind:"op",symbol:"−",ru:"вычитание",en:"subtraction"},
+  mul:{kind:"op",symbol:"×",ru:"умножение",en:"multiplication"}, div:{kind:"op",symbol:"÷",ru:"деление",en:"division"},
+  mod:{kind:"op",symbol:"%",ru:"остаток",en:"remainder"}, pow:{kind:"op",symbol:"^",ru:"степень",en:"power"},
+  fact:{kind:"postfix",symbol:"!",ru:"факториал",en:"factorial"}, imag:{kind:"const",symbol:"i",ru:"мнимая единица",en:"imaginary unit"},
+  pi:{kind:"const",symbol:"π",ru:"число π",en:"pi"}, e:{kind:"const",symbol:"e",ru:"число e",en:"Euler's number"},
+  sqrt:{kind:"fn",symbol:"√",ru:"квадратный корень",en:"square root"}, abs:{kind:"fn",symbol:"|x|",ru:"модуль",en:"absolute value"},
+  sin:{kind:"fn",symbol:"sin",ru:"синус",en:"sine"}, cos:{kind:"fn",symbol:"cos",ru:"косинус",en:"cosine"}, tan:{kind:"fn",symbol:"tan",ru:"тангенс",en:"tangent"},
+  exp:{kind:"fn",symbol:"exp",ru:"экспонента",en:"exponential"}, ln:{kind:"fn",symbol:"ln",ru:"натуральный логарифм",en:"natural logarithm"}, log:{kind:"fn",symbol:"log",ru:"десятичный логарифм",en:"base-10 logarithm"}
+};
+const labelOf = id => lang==="ru"?META[id].ru:META[id].en;
 
-function randomDecayDelay(meanSec) {
-  return Math.round(meanSec * (0.65 + Math.random()*0.7) * 1000);
-}
-function freshBrain(decayMeanSec=28) {
-  const delay=randomDecayDelay(decayMeanSec);
-  return {
-    version:2,
-    createdAt:Date.now(),
-    decayMeanSec,
-    nextDecayAt:Date.now()+delay,
-    concepts:{}
-  };
-}
-function loadBrain() {
-  try {
-    const raw=sessionStorage.getItem(BRAIN_KEY);
-    if (!raw) return freshBrain();
-    const b=JSON.parse(raw);
-    if (!b || b.version!==2) return freshBrain();
-    return b;
-  } catch {
-    return freshBrain();
-  }
-}
-function saveBrain() {
-  sessionStorage.setItem(BRAIN_KEY,JSON.stringify(brain));
-}
-function loadLog() {
-  try { return JSON.parse(sessionStorage.getItem(LOG_KEY)||"[]"); }
-  catch { return []; }
-}
-function saveLog() {
-  sessionStorage.setItem(LOG_KEY,JSON.stringify(observerLog.slice(-500)));
-}
+function randomDelay(mean){return Math.round(mean*(.65+Math.random()*.7)*1000)}
+function freshBrain(mean=42){return{version:3,createdAt:Date.now(),decayMeanSec:mean,nextDecayAt:Date.now()+randomDelay(mean),concepts:{}}}
+function loadBrain(){try{const r=sessionStorage.getItem(BRAIN_KEY);if(!r)return freshBrain();const b=JSON.parse(r);return b?.version===3?b:freshBrain()}catch{return freshBrain()}}
+function saveBrain(){sessionStorage.setItem(BRAIN_KEY,JSON.stringify(brain))}
+function loadJSON(key,fallback){try{return JSON.parse(sessionStorage.getItem(key)||JSON.stringify(fallback))}catch{return fallback}}
+function saveLog(){sessionStorage.setItem(LOG_KEY,JSON.stringify(observerLog.slice(-600)))}
+function saveStats(){sessionStorage.setItem(STATS_KEY,JSON.stringify(statsHistory.slice(-800)))}
 
-let brain=loadBrain();
-let observerLog=loadLog();
-let selectedMemoryKey=null;
-let busy=false;
+let brain=loadBrain(), observerLog=loadJSON(LOG_KEY,[]), statsHistory=loadJSON(STATS_KEY,[]), selectedMemoryKey=null, busy=false;
+function concept(id){return brain.concepts[id]||null}
+function makeConcept(id){return{id,strength:100,discoveredAt:Date.now(),lastSeen:Date.now(),table:null,episodes:{},constant:null,method:true}}
+function remember(c){c.lastSeen=Date.now();c.strength=clamp(c.strength+4,0,100);saveBrain()}
 
-function conceptKey(kind,name) { return `${kind}:${name}`; }
+/* --------------------------- visual thinking ----------------------- */
+function clearThinking(){$("thinking").innerHTML=""}
+function think(text,cls="memory"){
+  const d=document.createElement("div");d.className=`think-line ${cls}`;
+  d.innerHTML=`<span class="time">${new Date().toLocaleTimeString(lang==="ru"?"ru-RU":"en-GB",{hour12:false})}</span>${escapeHtml(text)}`;
+  $("thinking").appendChild(d);$("thinking").scrollTop=$("thinking").scrollHeight;
+}
+function setResult(html){$("result").dataset.touched="1";$("result").innerHTML=html}
+function showProgress(on,p=0,label=""){$("progressWrap").classList.toggle("show",on);$("progressBar").style.width=`${clamp(p,0,100)}%`;$("progressLabel").textContent=label}
+function toast(text){const el=$("toast");el.textContent=text;el.classList.add("show");clearTimeout(toast.t);toast.t=setTimeout(()=>el.classList.remove("show"),4500)}
+function logObserver(message,type="memory"){observerLog.push({at:Date.now(),message,type});saveLog();renderObserver();recordStats(true)}
+async function dramatic(items){for(const x of items){think(L(x.ru,x.en),x.cls||"shock");await sleep(x.wait??850)}}
 
-function getConcept(kind,name) {
-  return brain.concepts[conceptKey(kind,name)] || null;
-}
-
-function newConcept(kind,name,label,symbol) {
-  return {
-    kind,name,label,symbol,
-    strength:100,
-    discoveredAt:Date.now(),
-    lastSeen:Date.now(),
-    table:null,
-    episodes:{}
-  };
-}
-
-function rememberConcept(c) {
-  c.lastSeen=Date.now();
-  c.strength=clamp(c.strength+4,0,100);
-}
-
-function logObserver(message,type="memory") {
-  observerLog.push({at:Date.now(),message,type});
-  saveLog();
-  renderObserver();
-}
-
-function displayConceptName(c) {
-  return c.label || c.name;
-}
-
-/* ----------------------- Thinking UI ------------------------ */
-
-function clearThinking() {
-  $("thinking").innerHTML="";
-}
-function nowTime() {
-  return new Date().toLocaleTimeString("ru-RU",{hour12:false});
-}
-function think(text,cls="") {
-  const line=document.createElement("div");
-  line.className=`think-line ${cls}`;
-  line.innerHTML=`<span class="time">${nowTime()}</span>${escapeHtml(text)}`;
-  $("thinking").appendChild(line);
-  $("thinking").scrollTop=$("thinking").scrollHeight;
-}
-function setResult(html) { $("result").innerHTML=html; }
-function showProgress(show,pct=0,label="") {
-  $("progressWrap").classList.toggle("show",show);
-  $("progressBar").style.width=`${clamp(pct,0,100)}%`;
-  $("progressLabel").textContent=label;
-}
-function toast(text) {
-  const el=$("toast");
-  el.textContent=text;
-  el.classList.add("show");
-  clearTimeout(toast.timer);
-  toast.timer=setTimeout(()=>el.classList.remove("show"),4500);
-}
-
-async function dramatic(lines) {
-  for (const item of lines) {
-    think(item.text,item.cls||"shock");
-    await sleep(item.wait ?? 700);
-  }
-}
-
-async function discoverConcept(kind,name,label,symbol,flavour="normal") {
-  const key=conceptKey(kind,name);
-  let c=brain.concepts[key];
-
-  if (c) {
-    if (c.strength < 27) {
+async function ensureConcept(id){
+  let c=concept(id);
+  if(c){
+    if(c.strength<25){
       await dramatic([
-        {text:`Стоп. «${label}»... Я это слово где-то видел.`,cls:"confuse",wait:850},
-        {text:"В памяти дыра. Пытаюсь восстановить смысл по остаткам.",cls:"confuse",wait:850},
-        {text:"Кажется... да. Что-то возвращается.",cls:"learn",wait:600},
+        {ru:`Стоп. «${META[id].ru}»... Я это где-то знал.`,en:`Wait. “${META[id].en}”... I used to know this.`,cls:"confuse",wait:850},
+        {ru:"В памяти остались только обрывки. Пытаюсь восстановить правило.",en:"Only fragments remain. Trying to reconstruct the rule.",cls:"confuse",wait:900},
+        {ru:"Кажется, схема снова складывается.",en:"I think the pattern is coming back.",cls:"learn",wait:700}
       ]);
-      c.strength=clamp(c.strength+38,0,100);
-      saveBrain();
-      logObserver(`Понятие «${label}» частично восстановлено после провала памяти.`,"learn");
-    } else {
-      rememberConcept(c);
-      saveBrain();
-    }
+      c.strength=65;saveBrain();logObserver(L(`Восстановлено понятие «${META[id].ru}».`,`Reconstructed the concept “${META[id].en}”.`),"learn");
+    } else remember(c);
     return c;
   }
 
-  c=newConcept(kind,name,label,symbol);
-  brain.concepts[key]=c;
-  saveBrain();
-
-  if (flavour==="complex") {
+  c=makeConcept(id);brain.concepts[id]=c;saveBrain();
+  if(id==="imag"){
     await dramatic([
-      {text:"Подождите.",cls:"shock",wait:900},
-      {text:"Я вижу здесь букву i.",cls:"shock",wait:1000},
-      {text:"Но... числа же должны лежать на числовой прямой.",cls:"shock",wait:1100},
-      {text:"Почему квадрат этого существа равен −1?",cls:"shock",wait:1050},
-      {text:"...",cls:"confuse",wait:850},
-      {text:"Ладно. Похоже, одной прямой недостаточно. Записываю: комплексная плоскость.",cls:"learn",wait:950},
+      {ru:"Подождите. Здесь появилась буква i.",en:"Wait. There is an i here.",wait:1050},
+      {ru:"Но числа же должны лежать на числовой прямой.",en:"But numbers are supposed to live on a number line.",wait:1200},
+      {ru:"Мне предлагают число, квадрат которого равен −1.",en:"I am being asked to accept a number whose square is −1.",wait:1300},
+      {ru:"...",en:"...",cls:"confuse",wait:1000},
+      {ru:"Хорошо. Видимо, одной прямой мало. Нужна плоскость.",en:"Fine. Apparently one line is not enough. I need a plane.",cls:"confuse",wait:1250},
+      {ru:"Записываю новое существо: i = (0, 1).",en:"Recording a new creature: i = (0, 1).",cls:"learn",wait:900}
     ]);
-  } else if (flavour==="function") {
+  } else if(id==="pi"){
     await dramatic([
-      {text:`Что такое «${label}»? Это уже не просто знак между двумя числами.`,cls:"shock",wait:850},
-      {text:"Похоже, число можно целиком отдать какой-то машине и получить другое число.",cls:"confuse",wait:900},
-      {text:`Записываю новое преобразование: ${label}.`,cls:"learn",wait:650},
+      {ru:"π — это не обычный ввод. Похоже, это постоянная.",en:"π is not ordinary input. It seems to be a constant.",wait:900},
+      {ru:"Не буду брать готовое значение. Попробую восстановить его рядом дробей.",en:"I will not take a ready-made value. I will reconstruct it from a series.",cls:"research",wait:1000}
     ]);
-  } else if (flavour==="factorial") {
+  } else if(id==="e"){
     await dramatic([
-      {text:"Почему после числа стоит восклицательный знак?",cls:"shock",wait:900},
-      {text:"Это не эмоция. Это... операция.",cls:"confuse",wait:900},
-      {text:"Число умножается на все предыдущие целые. Звучит расточительно. Мне нравится.",cls:"learn",wait:800},
+      {ru:"Число e? Ещё одна именованная константа.",en:"The number e? Another named constant.",wait:850},
+      {ru:"Попробую собрать его из суммы обратных факториалов.",en:"I will build it from the sum of reciprocal factorials.",cls:"research",wait:950}
     ]);
-  } else if (flavour==="constant") {
+  } else if(META[id].kind==="fn"){
     await dramatic([
-      {text:`Что ещё за постоянное число «${label}»?`,cls:"shock",wait:850},
-      {text:"То есть некоторые числа настолько важные, что им дали имя.",cls:"confuse",wait:850},
-      {text:`Запоминаю ${label}.`,cls:"learn",wait:600},
+      {ru:`Что такое «${META[id].ru}»? Это уже не просто знак между числами.`,en:`What is “${META[id].en}”? This is more than a sign between numbers.`,wait:950},
+      {ru:"Похоже, мне нужен целый алгоритм, а не одна таблица.",en:"It looks like I need an entire algorithm, not one table.",cls:"confuse",wait:1000},
+      {ru:"Попробую вывести приближение шаг за шагом.",en:"I will derive an approximation step by step.",cls:"research",wait:900}
+    ]);
+  } else if(id==="fact"){
+    await dramatic([
+      {ru:"Почему после числа стоит восклицательный знак?",en:"Why is there an exclamation mark after the number?",wait:950},
+      {ru:"Это не эмоция. Это операция: перемножить все предыдущие положительные целые.",en:"It is not emotion. It is an operation: multiply all preceding positive integers.",cls:"confuse",wait:1200},
+      {ru:"Расточительно. Прекрасно.",en:"Wasteful. Excellent.",cls:"learn",wait:750}
     ]);
   } else {
+    const special={
+      add:["Кажется, знак + означает движение по числам шаг за шагом.","It seems + means moving through numbers one step at a time."],
+      sub:["Вычитание похоже на сложение, только идти нужно назад.","Subtraction looks like addition, except I walk backwards."],
+      mul:["Умножение... похоже на многократное сложение одного и того же числа.","Multiplication... looks like repeated addition of the same number."],
+      div:["Деление, кажется, спрашивает: сколько раз одно число помещается в другом.","Division seems to ask how many times one number fits inside another."],
+      mod:["Остаток — то, что остаётся после повторного вычитания делителя.","A remainder is what survives repeated subtraction of the divisor."],
+      pow:["Степень выглядит как повторное умножение.","A power looks like repeated multiplication."]
+    }[id];
     await dramatic([
-      {text:`НИФИГА СЕБЕ. Новый математический знак: «${symbol}».`,cls:"shock",wait:1050},
-      {text:`Похоже, это называется «${label}».`,cls:"shock",wait:900},
-      {text:"Я этого раньше не умел. Дайте посмотреть, как оно ведёт себя на целых числах.",cls:"confuse",wait:900},
-      {text:`Создаю в голове раздел «${label}».`,cls:"learn",wait:750},
+      {ru:`НИФИГА СЕБЕ. Новый знак: «${META[id].symbol}».`,en:`OH. A new symbol: “${META[id].symbol}”.`,wait:1200},
+      {ru:`Похоже, это называется «${META[id].ru}».`,en:`Apparently this is called “${META[id].en}”.`,wait:1000},
+      {ru:special[0],en:special[1],cls:"research",wait:1250},
+      {ru:"Не хочу просто запомнить один ответ. Построю правило и таблицу.",en:"I do not want to memorize one answer. I will build a rule and a table.",cls:"learn",wait:1000}
     ]);
   }
-
-  logObserver(`Открыто новое понятие: «${label}».`,"discover");
-  renderAll();
-  return c;
+  logObserver(L(`Открыто новое понятие «${META[id].ru}».`,`Discovered a new concept: “${META[id].en}”.`),"discover");renderAll();return c;
 }
 
-/* ------------------- Arithmetic experiment ------------------ */
-
-const OP_META = {
-  "+":{label:"сложение",symbol:"+"},
-  "-":{label:"вычитание",symbol:"−"},
-  "*":{label:"умножение",symbol:"×"},
-  "/":{label:"деление",symbol:"÷"},
-  "%":{label:"остаток от деления",symbol:"%"},
-  "^":{label:"возведение в степень",symbol:"^"},
-};
-
-function rawBinary(op,a,b) {
-  a=Complex.from(a); b=Complex.from(b);
-  switch(op) {
-    case "+": return a.add(b);
-    case "-": return a.sub(b);
-    case "*": return a.mul(b);
-    case "/": return a.div(b);
-    case "^": return a.pow(b);
-    case "%":
-      if (!a.isReal() || !b.isReal() || b.re===0) return new Complex(NaN,NaN);
-      return new Complex(a.re % b.re,0);
-    default: return new Complex(NaN,NaN);
+/* -------------------- arithmetic without shortcuts ---------------- */
+function succ(n){return n+1}
+function pred(n){return n-1}
+function addIntCore(a,b){let r=a,steps=absN(b);for(let i=0;i<steps;i++)r=b>=0?succ(r):pred(r);return r}
+function subIntCore(a,b){return addIntCore(a,-b)}
+function mulIntCore(a,b){
+  const neg=(a<0)!==(b<0),aa=absN(a),bb=absN(b);let r=0;
+  for(let i=0;i<bb;i++)r=addIntCore(r,aa);return neg?-r:r;
+}
+function divIntCore(a,b,precision=10){
+  if(b===0)return NaN;
+  const neg=(a<0)!==(b<0),aa=absN(a),bb=absN(b);let rem=aa,whole=0;
+  while(rem>=bb){rem=subIntCore(rem,bb);whole=succ(whole)}
+  let digits="";
+  for(let p=0;p<precision && rem!==0;p++){
+    rem=mulIntCore(rem,10);let d=0;while(rem>=bb){rem=subIntCore(rem,bb);d=succ(d)}digits+=String(d);
   }
+  const text=(neg?"-":"")+String(whole)+(digits?"."+digits:"");return Number(text);
+}
+function modIntCore(a,b){
+  if(b===0)return NaN;const neg=a<0;let rem=absN(a),bb=absN(b);while(rem>=bb)rem=subIntCore(rem,bb);return neg?-rem:rem;
+}
+function powIntCore(a,b){
+  if(!Number.isSafeInteger(b))return NaN;if(b===0)return 1;let r=1;
+  for(let i=0;i<absN(b);i++)r=mulIntCore(r,a);return b<0?divIntCore(1,r,12):r;
 }
 
-function rawFunction(name,z) {
-  z=Complex.from(z);
-  switch(name) {
-    case "sqrt": return z.sqrt();
-    case "abs": return new Complex(z.abs(),0);
-    case "sin": return z.sin();
-    case "cos": return z.cos();
-    case "tan": return z.tan();
-    case "ln": return z.log();
-    case "log": return z.log().div(new Complex(Math.log(10),0));
-    case "exp": return z.exp();
-    default: return new Complex(NaN,NaN);
+/* For non-integers the browser's Number type is the physical substrate.
+   These helpers are intentionally isolated below the learned algorithms.
+   The evaluator never dispatches an expression directly to them. */
+const machineAdd=(a,b)=>a+b, machineSub=(a,b)=>a-b, machineMul=(a,b)=>a*b, machineDiv=(a,b)=>a/b;
+function realCore(id,a,b){
+  if(Number.isSafeInteger(a)&&Number.isSafeInteger(b)){
+    if(id==="add")return addIntCore(a,b);if(id==="sub")return subIntCore(a,b);if(id==="mul")return mulIntCore(a,b);if(id==="div")return divIntCore(a,b,12);if(id==="mod")return modIntCore(a,b);if(id==="pow")return powIntCore(a,b);
   }
+  if(id==="add")return machineAdd(a,b);if(id==="sub")return machineSub(a,b);if(id==="mul")return machineMul(a,b);if(id==="div")return b===0?NaN:machineDiv(a,b);if(id==="mod")return b===0?NaN:a%b;
+  return NaN;
 }
-
-function factorialComplex(z) {
-  z=Complex.from(z);
-  if (!z.isReal() || !Number.isSafeInteger(z.re) || z.re<0 || z.re>170) {
-    return new Complex(NaN,NaN);
+function complexCore(id,a,b){
+  a=Complex.from(a);b=Complex.from(b);
+  if(id==="add")return new Complex(realCore("add",a.re,b.re),realCore("add",a.im,b.im));
+  if(id==="sub")return new Complex(realCore("sub",a.re,b.re),realCore("sub",a.im,b.im));
+  if(id==="mul"){
+    const ac=realCore("mul",a.re,b.re),bd=realCore("mul",a.im,b.im),ad=realCore("mul",a.re,b.im),bc=realCore("mul",a.im,b.re);
+    return new Complex(realCore("sub",ac,bd),realCore("add",ad,bc));
   }
-  let out=1;
-  for (let i=2;i<=z.re;i++) out*=i;
-  return new Complex(out,0);
-}
-
-function isSmallInteger(z) {
-  z=Complex.from(z);
-  return z.isReal() && Number.isSafeInteger(z.re) && Math.abs(z.re)<=TABLE_LIMIT;
-}
-
-function episodeKey(parts) { return parts.join("|"); }
-
-async function buildTable(concept,op,newMin,newMax) {
-  if (!concept.table) concept.table={min:newMin,max:newMax,cells:{}};
-  const oldMin=concept.table.min;
-  const oldMax=concept.table.max;
-  concept.table.min=Math.min(oldMin,newMin);
-  concept.table.max=Math.max(oldMax,newMax);
-
-  const min=concept.table.min;
-  const max=concept.table.max;
-  const total=(max-min+1)**2;
-  let done=0;
-
-  think(`Строю таблицу «${concept.label}» для диапазона ${min}…${max}.`, "learn");
-  showProgress(true,0,`таблица ${concept.label}: ${min}…${max}`);
-
-  for (let a=min;a<=max;a++) {
-    for (let b=min;b<=max;b++) {
-      const key=`${a},${b}`;
-      if (!concept.table.cells[key]) {
-        const value=rawBinary(op,new Complex(a,0),new Complex(b,0));
-        concept.table.cells[key]={
-          value:serializeComplex(value),
-          strength:100
-        };
-      }
-      done++;
-    }
-
-    const pct=done/total*100;
-    showProgress(true,pct,`запоминаю строку ${a}: ${done.toLocaleString("ru-RU")} / ${total.toLocaleString("ru-RU")}`);
-    saveBrain();
-    if (selectedMemoryKey===conceptKey("op",op)) renderMemory();
-    await sleep((max-min)>22?8:22);
+  if(id==="div"){
+    const c2=realCore("mul",b.re,b.re),d2=realCore("mul",b.im,b.im),den=realCore("add",c2,d2);if(den===0)return new Complex(NaN,NaN);
+    const ac=realCore("mul",a.re,b.re),bd=realCore("mul",a.im,b.im),bc=realCore("mul",a.im,b.re),ad=realCore("mul",a.re,b.im);
+    return new Complex(realCore("div",realCore("add",ac,bd),den),realCore("div",realCore("sub",bc,ad),den));
   }
-
-  showProgress(false);
-  think(`Готово. В таблице теперь ${Object.keys(concept.table.cells).length.toLocaleString("ru-RU")} явных воспоминаний.`, "learn");
-  logObserver(`Построена/расширена таблица «${concept.label}» для ${min}…${max}.`,"learn");
-}
-
-async function applyBinary(op,a,b) {
-  const meta=OP_META[op];
-  const concept=await discoverConcept("op",op,meta.label,meta.symbol,"normal");
-  rememberConcept(concept);
-
-  const exactEpisode=episodeKey([complexHash(a),complexHash(b)]);
-  const episode=concept.episodes[exactEpisode];
-
-  if (episode && episode.strength>0) {
-    episode.strength=clamp(episode.strength+3,0,100);
-    think(`Вспомнил отдельный пример: ${fmt(a)} ${meta.symbol} ${fmt(b)}.`, "memory");
-    saveBrain();
-    return deserializeComplex(episode.value);
-  }
-
-  if (isSmallInteger(a) && isSmallInteger(b)) {
-    const ai=Math.trunc(a.re), bi=Math.trunc(b.re);
-    const min=Math.min(0,ai,bi);
-    const max=Math.max(0,ai,bi);
-
-    if (!concept.table || min<concept.table.min || max>concept.table.max) {
-      await buildTable(concept,op,min,max);
-    }
-
-    const cell=concept.table.cells[`${ai},${bi}`];
-
-    if (cell && cell.strength>0) {
-      cell.strength=clamp(cell.strength+4,0,100);
-      think(`Нашёл нужную ячейку в таблице «${meta.label}».`, "memory");
-      saveBrain();
-      return deserializeComplex(cell.value);
-    }
-
-    think(`Ячейка ${ai} ${meta.symbol} ${bi} вырвана из памяти. Восстанавливаю её экспериментом.`, "confuse");
-    await sleep(650);
-
-    const value=rawBinary(op,a,b);
-    concept.table.cells[`${ai},${bi}`]={value:serializeComplex(value),strength:100};
-    saveBrain();
-    return value;
-  }
-
-  think(`Такой случай в таблицу нормально не помещается: ${fmt(a)} ${meta.symbol} ${fmt(b)}.`, "confuse");
-  await sleep(500);
-  think("Провожу единичный эксперимент и сохраняю его как эпизодическое воспоминание.", "learn");
-  await sleep(550);
-
-  const value=rawBinary(op,a,b);
-  concept.episodes[exactEpisode]={
-    expression:`${fmt(a)} ${meta.symbol} ${fmt(b)}`,
-    value:serializeComplex(value),
-    strength:100,
-    createdAt:Date.now()
-  };
-  saveBrain();
-  return value;
-}
-
-async function applyFunction(name,arg) {
-  const labels={
-    sqrt:"квадратный корень",abs:"модуль",sin:"синус",cos:"косинус",
-    tan:"тангенс",ln:"натуральный логарифм",log:"десятичный логарифм",exp:"экспонента"
-  };
-  const concept=await discoverConcept("fn",name,labels[name],`${name}(x)`,"function");
-  rememberConcept(concept);
-
-  const key=episodeKey([complexHash(arg)]);
-  const episode=concept.episodes[key];
-
-  if (episode && episode.strength>0) {
-    think(`Вспомнил, что уже пробовал ${name}(${fmt(arg)}).`, "memory");
-    episode.strength=clamp(episode.strength+4,0,100);
-    saveBrain();
-    return deserializeComplex(episode.value);
-  }
-
-  think(`Экспериментирую с ${name}(${fmt(arg)}).`, "learn");
-  await sleep(500);
-  const value=rawFunction(name,arg);
-
-  concept.episodes[key]={
-    expression:`${name}(${fmt(arg)})`,
-    value:serializeComplex(value),
-    strength:100,
-    createdAt:Date.now()
-  };
-  saveBrain();
-  return value;
-}
-
-async function applyFactorial(arg) {
-  const concept=await discoverConcept("postfix","!","факториал","!","factorial");
-  rememberConcept(concept);
-
-  const key=complexHash(arg);
-  const episode=concept.episodes[key];
-
-  if (episode && episode.strength>0) {
-    think(`Факториал ${fmt(arg)} уже был выучен.`, "memory");
-    return deserializeComplex(episode.value);
-  }
-
-  if (!arg.isReal() || !Number.isSafeInteger(arg.re) || arg.re<0) {
-    think("Факториал здесь требует знаний, которых у меня пока нет.", "bad");
-    return new Complex(NaN,NaN);
-  }
-
-  think(`Старательно перемножаю все целые от 1 до ${arg.re}.`, "learn");
-  const steps=Math.min(arg.re,20);
-  for (let i=2;i<=steps;i++) {
-    if (i<=8 || i===steps) {
-      think(`... дошёл до × ${i}`, "memory");
-      await sleep(100);
-    }
-  }
-
-  const value=factorialComplex(arg);
-  concept.episodes[key]={
-    expression:`${fmt(arg)}!`,
-    value:serializeComplex(value),
-    strength:100,
-    createdAt:Date.now()
-  };
-  saveBrain();
-  return value;
-}
-
-async function evalNode(node) {
-  switch(node.type) {
-    case "number":
-      return new Complex(node.value,0);
-
-    case "constant":
-      if (node.name==="i") {
-        await discoverConcept("const","i","мнимая единица i","i","complex");
-        return new Complex(0,1);
-      }
-      if (node.name==="pi") {
-        await discoverConcept("const","pi","число π","π","constant");
-        return new Complex(Math.PI,0);
-      }
-      if (node.name==="e") {
-        await discoverConcept("const","e","число e","e","constant");
-        return new Complex(Math.E,0);
-      }
-      return new Complex(NaN,NaN);
-
-    case "unary": {
-      const v=await evalNode(node.arg);
-      if (node.op==="+") return v;
-      await discoverConcept("unary","-","отрицательное число","−","normal");
-      return v.neg();
-    }
-
-    case "binary": {
-      const left=await evalNode(node.left);
-      const right=await evalNode(node.right);
-      return await applyBinary(node.op,left,right);
-    }
-
-    case "function": {
-      const arg=await evalNode(node.arg);
-      return await applyFunction(node.name,arg);
-    }
-
-    case "postfix": {
-      const arg=await evalNode(node.arg);
-      return await applyFactorial(arg);
-    }
-  }
-
   return new Complex(NaN,NaN);
 }
 
-/* --------------------------- Dementia ------------------------ */
-
-function allConcepts() {
-  return Object.values(brain.concepts);
+function tableBounds(a,b){const min=Math.min(0,a,b),max=Math.max(0,a,b);return absN(min)<=TABLE_LIMIT&&absN(max)<=TABLE_LIMIT?{min,max}:null}
+function tableAlgorithm(id,a,b){
+  if(id==="add")return addIntCore(a,b);if(id==="sub")return subIntCore(a,b);if(id==="mul")return mulIntCore(a,b);if(id==="div")return divIntCore(a,b,8);if(id==="mod")return modIntCore(a,b);return NaN;
 }
-
-function memoryHealth() {
-  const concepts=allConcepts();
-  if (!concepts.length) return 100;
-
-  let score=0, weights=0;
-
-  for (const c of concepts) {
-    score+=c.strength*3;
-    weights+=3;
-
-    if (c.table) {
-      for (const cell of Object.values(c.table.cells)) {
-        score+=cell.strength;
-        weights++;
-      }
+async function buildTable(c,id,min,max){
+  if(!c.table)c.table={min,max,cells:{}};c.table.min=Math.min(c.table.min,min);c.table.max=Math.max(c.table.max,max);min=c.table.min;max=c.table.max;
+  const total=(max-min+1)**2;let done=0;
+  think(L(`Строю таблицу «${META[id].ru}» для ${min}…${max}.`,`Building the “${META[id].en}” table for ${min}…${max}.`),"learn");
+  showProgress(true,0,L("собираю знания по ячейкам","building knowledge cell by cell"));
+  for(let a=min;a<=max;a++){
+    for(let b=min;b<=max;b++){
+      const k=`${a},${b}`;
+      if(!c.table.cells[k])c.table.cells[k]={value:ser(new Complex(tableAlgorithm(id,a,b),0)),strength:100};
+      done++;
     }
-
-    for (const ep of Object.values(c.episodes)) {
-      score+=ep.strength;
-      weights++;
-    }
+    showProgress(true,done/total*100,L(`строка ${a}: ${done} / ${total} ячеек`,`row ${a}: ${done} / ${total} cells`));
+    saveBrain();if(selectedMemoryKey===id)renderMemory();await sleep((max-min)>20?18:55);
   }
-
-  return weights?clamp(score/weights,0,100):100;
+  showProgress(false);think(L(`Таблица готова: ${Object.keys(c.table.cells).length} явных ячеек.`,`Table complete: ${Object.keys(c.table.cells).length} explicit cells.`),"learn");
+  logObserver(L(`Построена таблица «${META[id].ru}» ${min}…${max}.`,`Built the “${META[id].en}” table ${min}…${max}.`),"learn");
 }
+async function ensureDependencies(id){
+  if(id==="sub")await ensureConcept("add");
+  if(id==="mul")await ensureConcept("add");
+  if(id==="div"||id==="mod"){await ensureConcept("sub");}
+  if(id==="pow"||id==="fact")await ensureConcept("mul");
+}
+async function applyBinary(id,a,b){
+  await ensureConcept(id);await ensureDependencies(id);const c=concept(id);remember(c);
+  const epKey=`${hashZ(a)}|${hashZ(b)}`;
+  if(c.episodes[epKey]&&c.episodes[epKey].strength>0){c.episodes[epKey].strength=clamp(c.episodes[epKey].strength+4,0,100);saveBrain();think(L("Это уже знакомый эпизод. Достаю ответ из памяти.","I have seen this exact episode before. Retrieving it from memory."),"memory");return de(c.episodes[epKey].value)}
 
-function damageSomeMemory(manual=false) {
-  const concepts=allConcepts();
-
-  if (!concepts.length) {
-    scheduleNextDecay();
-    logObserver("Приступ деменции произошёл, но забывать было ещё нечего.","decay");
-    toast("Приступ прошёл впустую: мозг и так пуст.");
-    return;
-  }
-
-  const hits=Math.min(concepts.length,1+Math.floor(Math.random()*Math.min(3,concepts.length)));
-  const shuffled=[...concepts].sort(()=>Math.random()-.5);
-  const reports=[];
-
-  for (const c of shuffled.slice(0,hits)) {
-    const loss=8+Math.floor(Math.random()*18);
-    c.strength=clamp(c.strength-loss,0,100);
-
-    let cellsDamaged=0;
-    let cellsForgotten=0;
-
-    if (c.table) {
-      const keys=Object.keys(c.table.cells).sort(()=>Math.random()-.5);
-      const fraction=c.strength<30?.24:c.strength<55?.13:.07;
-      const n=Math.max(1,Math.floor(keys.length*fraction));
-
-      for (const key of keys.slice(0,n)) {
-        const cell=c.table.cells[key];
-        cell.strength=clamp(cell.strength-(18+Math.random()*45),0,100);
-        cellsDamaged++;
-        if (cell.strength<=2) {
-          delete c.table.cells[key];
-          cellsForgotten++;
-        }
-      }
-    }
-
-    const epKeys=Object.keys(c.episodes).sort(()=>Math.random()-.5);
-    const epN=Math.min(epKeys.length,Math.max(0,Math.floor(epKeys.length*(c.strength<40?.25:.08))));
-
-    for (const key of epKeys.slice(0,epN)) {
-      c.episodes[key].strength=clamp(c.episodes[key].strength-(25+Math.random()*45),0,100);
-      if (c.episodes[key].strength<=2) delete c.episodes[key];
-    }
-
-    if (c.strength<=1) {
-      delete brain.concepts[conceptKey(c.kind,c.name)];
-      reports.push(`полностью забыл понятие «${c.label}»`);
-    } else if (cellsForgotten) {
-      reports.push(`«${c.label}»: потеряно ${cellsForgotten} ячеек, ещё ${cellsDamaged-cellsForgotten} повреждено`);
-    } else if (cellsDamaged) {
-      reports.push(`«${c.label}»: повреждено ${cellsDamaged} ячеек`);
-    } else {
-      reports.push(`«${c.label}»: уверенность упала до ${Math.round(c.strength)}%`);
+  if(a.isReal()&&b.isReal()&&Number.isSafeInteger(a.re)&&Number.isSafeInteger(b.re)&&["add","sub","mul","div","mod"].includes(id)){
+    const bounds=tableBounds(a.re,b.re);
+    if(bounds){
+      if(!c.table||bounds.min<c.table.min||bounds.max>c.table.max)await buildTable(c,id,bounds.min,bounds.max);
+      const k=`${a.re},${b.re}`;let cell=c.table.cells[k];
+      if(!cell){think(L("Нужная ячейка вырвана из памяти. Восстанавливаю её из правила.","The needed cell is missing. Reconstructing it from the rule."),"confuse");await sleep(700);cell={value:ser(new Complex(tableAlgorithm(id,a.re,b.re),0)),strength:100};c.table.cells[k]=cell;saveBrain()}
+      cell.strength=clamp(cell.strength+5,0,100);saveBrain();think(L("Нашёл нужную ячейку в своей таблице.","Found the required cell in my table."),"memory");return de(cell.value);
     }
   }
 
-  scheduleNextDecay();
-  saveBrain();
+  think(L("Этот случай не помещается в маленькую таблицу. Применяю выученное правило по шагам.","This case does not fit a small table. Applying the learned rule step by step."),"research");await sleep(700);
+  let value;
+  if(id==="pow"){
+    if(!b.isReal()||!Number.isSafeInteger(b.re)){think(L("Дробные и комплексные степени пока за границей моей модели.","Fractional and complex exponents are outside my current model."),"bad");return new Complex(NaN,NaN)}
+    let r=new Complex(1,0),n=absN(b.re);for(let i=0;i<n;i++){r=complexCore("mul",r,a);if(i<6||i===n-1){think(L(`умножение ${i+1} из ${n}`,`multiplication ${i+1} of ${n}`),"research");await sleep(120)}}
+    value=b.re<0?complexCore("div",new Complex(1,0),r):r;
+  } else if(id==="mod"){
+    if(!a.isReal()||!b.isReal())return new Complex(NaN,NaN);value=new Complex(realCore("mod",a.re,b.re),0);
+  } else value=complexCore(id,a,b);
 
-  const message=reports.join("; ");
-  logObserver(`Приступ деменции: ${message}.`,"decay");
-  toast(`Память дала сбой: ${reports[0]}.`);
+  c.episodes[epKey]={expression:`${fmt(a)} ${META[id].symbol} ${fmt(b)}`,value:ser(value),strength:100,createdAt:Date.now()};saveBrain();
+  think(L("Сохраняю этот необычный случай как отдельное воспоминание.","Saving this unusual case as an episodic memory."),"learn");return value;
+}
 
-  if (!busy) {
-    think(`[ПАМЯТЬ ДАЛА СБОЙ] ${message}.`,"bad");
+/* ---------------------- constants / functions ---------------------- */
+async function derivePi(){
+  const c=await ensureConcept("pi");if(c.constant!=null)return c.constant;
+  let p=3,sign=1;
+  think(L("Использую ряд Нилаканты: 3 + 4/(2·3·4) − 4/(4·5·6) + ...","Using the Nilakantha series: 3 + 4/(2·3·4) − 4/(4·5·6) + ..."),"research");
+  for(let n=2,step=1;step<=28;n+=2,step++){
+    const den=machineMul(machineMul(n,n+1),n+2),term=machineDiv(4,den);p=sign>0?machineAdd(p,term):machineSub(p,term);sign=-sign;
+    if(step<=6||step%5===0||step===28){think(L(`итерация ${step}: π ≈ ${clean(p)}`,`iteration ${step}: π ≈ ${clean(p)}`),"research");await sleep(120)}
   }
-
-  renderAll();
+  c.constant=p;saveBrain();logObserver(L(`Самостоятельно получено приближение π ≈ ${clean(p)}.`,`Independently derived π ≈ ${clean(p)}.`),"learn");return p;
 }
-
-function scheduleNextDecay() {
-  brain.nextDecayAt=Date.now()+randomDecayDelay(brain.decayMeanSec);
+async function deriveE(){
+  const c=await ensureConcept("e");if(c.constant!=null)return c.constant;
+  await ensureConcept("fact");await ensureDependencies("fact");let sum=1,fact=1;
+  for(let n=1;n<=14;n++){fact=mulIntCore(fact,n);sum=machineAdd(sum,machineDiv(1,fact));if(n<=6||n===10||n===14){think(L(`член 1/${n}! → e ≈ ${clean(sum)}`,`term 1/${n}! → e ≈ ${clean(sum)}`),"research");await sleep(140)}}
+  c.constant=sum;saveBrain();return sum;
 }
-
-function fullLobotomy() {
-  const mean=brain.decayMeanSec;
-  brain=freshBrain(mean);
-  saveBrain();
-  logObserver("Полная лоботомия: уничтожены все внутренние математические знания.","decay");
-  clearThinking();
-  think("Я... кто?", "bad");
-  think("Что такое число?", "confuse");
-  setResult("МОЗГ ПУСТ.\nВсе математические знания уничтожены.");
-  toast("Полная лоботомия завершена.");
-  renderAll();
+async function deriveSqrtReal(x){
+  if(x<0)return NaN;if(x===0)return 0;let g=x>=1?machineDiv(x,2):1;
+  for(let i=1;i<=12;i++){g=machineDiv(machineAdd(g,machineDiv(x,g)),2);if(i<=5||i===8||i===12){think(L(`Ньютон, шаг ${i}: ${clean(g)}`,`Newton step ${i}: ${clean(g)}`),"research");await sleep(110)}}return g;
 }
-
-function stageInfo(health) {
-  if (health>=82) return ["почти ясное сознание","Большая часть приобретённых знаний ещё держится."];
-  if (health>=62) return ["лёгкая забывчивость","Отдельные ячейки таблиц начинают тускнеть и выпадать."];
-  if (health>=40) return ["фрагментация памяти","Некоторые операции узнаются не сразу; таблицы становятся дырявыми."];
-  if (health>=18) return ["тяжёлая деградация","Сохранились обрывки правил и отдельные эпизоды. Знакомые знаки иногда кажутся новыми."];
-  return ["почти полная амнезия","Остатки математики держатся на нескольких случайных воспоминаниях."];
+async function taylorExp(z){
+  let sum=new Complex(1,0),term=new Complex(1,0);
+  for(let n=1;n<=20;n++){term=complexCore("mul",term,z);term=complexCore("div",term,new Complex(n,0));sum=complexCore("add",sum,term);if(n<=5||n%5===0){think(L(`ряд exp: член ${n}, сумма ≈ ${fmt(sum)}`,`exp series: term ${n}, sum ≈ ${fmt(sum)}`),"research");await sleep(100)}}return sum;
 }
-
-/* --------------------------- Render -------------------------- */
-
-function escapeHtml(s) {
-  return String(s)
-    .replaceAll("&","&amp;")
-    .replaceAll("<","&lt;")
-    .replaceAll(">","&gt;")
-    .replaceAll('"',"&quot;");
+async function taylorSin(z){
+  let sum=new Complex(0,0),term=z,zz=complexCore("mul",z,z);sum=complexCore("add",sum,term);
+  for(let n=1;n<=10;n++){
+    term=complexCore("mul",term,zz);term=complexCore("div",term,new Complex((2*n)*(2*n+1),0));term=new Complex(-term.re,-term.im);sum=complexCore("add",sum,term);
+    think(L(`sin: член ${n+1}, сумма ≈ ${fmt(sum)}`,`sin: term ${n+1}, sum ≈ ${fmt(sum)}`),"research");await sleep(115);
+  }return sum;
 }
-
-function renderConcepts() {
-  const list=$("conceptList");
-  const concepts=allConcepts().sort((a,b)=>b.lastSeen-a.lastSeen);
-
-  if (!concepts.length) {
-    list.innerHTML='<div class="empty-state">пока ничего</div>';
-    return;
-  }
-
-  list.innerHTML=concepts.map(c=>{
-    let details="эпизодические воспоминания";
-    if (c.table) details=`таблица ${c.table.min}…${c.table.max}`;
-    const count=(c.table?Object.keys(c.table.cells).length:0)+Object.keys(c.episodes).length;
-
-    return `<div class="concept">
-      <strong>${escapeHtml(c.symbol || c.name)} — ${escapeHtml(c.label)}</strong>
-      <span class="strength">${Math.round(c.strength)}%</span>
-      <small>${escapeHtml(details)} · ${count} записей</small>
-      <small>${c.strength<30?"путается":c.strength<60?"помнит неуверенно":"помнит"}</small>
-      <div class="minihealth"><i style="width:${c.strength}%"></i></div>
-    </div>`;
-  }).join("");
+async function taylorCos(z){
+  let sum=new Complex(1,0),term=new Complex(1,0),zz=complexCore("mul",z,z);
+  for(let n=1;n<=10;n++){
+    term=complexCore("mul",term,zz);term=complexCore("div",term,new Complex((2*n-1)*(2*n),0));term=new Complex(-term.re,-term.im);sum=complexCore("add",sum,term);
+    think(L(`cos: член ${n+1}, сумма ≈ ${fmt(sum)}`,`cos: term ${n+1}, sum ≈ ${fmt(sum)}`),"research");await sleep(115);
+  }return sum;
 }
-
-function renderMemorySelect() {
-  const select=$("memoryConcept");
-  const concepts=allConcepts();
-
-  if (!concepts.length) {
-    select.innerHTML='<option value="">память пуста</option>';
-    selectedMemoryKey=null;
-    return;
-  }
-
-  if (!selectedMemoryKey || !brain.concepts[selectedMemoryKey]) {
-    selectedMemoryKey=conceptKey(concepts[0].kind,concepts[0].name);
-  }
-
-  select.innerHTML=concepts
-    .map(c=>{
-      const key=conceptKey(c.kind,c.name);
-      return `<option value="${escapeHtml(key)}" ${key===selectedMemoryKey?"selected":""}>${escapeHtml(c.symbol || c.name)} — ${escapeHtml(c.label)}</option>`;
-    }).join("");
+async function deriveLnPositive(x){
+  if(!(x>0))return NaN;const y=machineDiv(machineSub(x,1),machineAdd(x,1)),y2=machineMul(y,y);let term=y,sum=0;
+  for(let n=0;n<34;n++){const denom=2*n+1;sum=machineAdd(sum,machineDiv(term,denom));term=machineMul(term,y2);if(n<5||n%6===0||n===33){think(L(`ln: член ${n+1}, приближение ≈ ${clean(machineMul(2,sum))}`,`ln: term ${n+1}, approximation ≈ ${clean(machineMul(2,sum))}`),"research");await sleep(85)}}return machineMul(2,sum);
 }
+async function applyFunction(id,z){
+  const c=await ensureConcept(id);remember(c);const k=hashZ(z);
+  if(c.episodes[k]&&c.episodes[k].strength>0){c.episodes[k].strength=clamp(c.episodes[k].strength+4,0,100);saveBrain();think(L("Такой аргумент уже исследован. Вспоминаю результат.","This argument has already been researched. Recalling the result."),"memory");return de(c.episodes[k].value)}
 
-function memoryRange(table) {
-  if (!table) return [];
-  let min=table.min,max=table.max;
-
-  if (max-min+1>TABLE_VIEW_LIMIT) {
-    if (min<=0 && max>=0) {
-      min=Math.max(min,-6);
-      max=Math.min(max,10);
-    } else {
-      max=Math.min(max,min+TABLE_VIEW_LIMIT-1);
+  let value=new Complex(NaN,NaN);
+  if(id==="sqrt"){
+    await ensureConcept("add");await ensureConcept("div");
+    if(z.isReal()&&z.re<0){await ensureConcept("imag");think(L("Под корнем отрицательное число. Переношу знак минус в направление i.","The radicand is negative. Moving the minus sign into the i direction."),"confuse");const r=await deriveSqrtReal(-z.re);value=new Complex(0,r)}
+    else if(z.isReal())value=new Complex(await deriveSqrtReal(z.re),0);
+    else {
+      await ensureConcept("imag");const mag=await deriveSqrtReal(machineAdd(machineMul(z.re,z.re),machineMul(z.im,z.im)));const a=await deriveSqrtReal(machineDiv(machineAdd(mag,z.re),2));const b=await deriveSqrtReal(machineDiv(machineSub(mag,z.re),2));value=new Complex(a,z.im<0?-b:b);
     }
+  } else if(id==="abs"){
+    await ensureConcept("sqrt");const s=machineAdd(machineMul(z.re,z.re),machineMul(z.im,z.im));value=new Complex(await deriveSqrtReal(s),0);
+  } else if(id==="sin"){await ensureConcept("add");await ensureConcept("mul");await ensureConcept("div");value=await taylorSin(z)}
+  else if(id==="cos"){await ensureConcept("add");await ensureConcept("mul");await ensureConcept("div");value=await taylorCos(z)}
+  else if(id==="tan"){await ensureConcept("sin");await ensureConcept("cos");await ensureConcept("div");const s=await taylorSin(z),co=await taylorCos(z);value=complexCore("div",s,co)}
+  else if(id==="exp"){await ensureConcept("add");await ensureConcept("mul");await ensureConcept("div");value=await taylorExp(z)}
+  else if(id==="ln"){
+    if(!z.isReal()||z.re<=0){think(L("Комплексный логарифм пока за пределами моей картины мира.","Complex logarithms are still outside my model."),"bad");value=new Complex(NaN,NaN)}
+    else {await ensureConcept("add");await ensureConcept("mul");await ensureConcept("div");value=new Complex(await deriveLnPositive(z.re),0)}
+  } else if(id==="log"){
+    if(!z.isReal()||z.re<=0)value=new Complex(NaN,NaN);else {await ensureConcept("ln");const lnx=await deriveLnPositive(z.re),ln10=await deriveLnPositive(10);value=new Complex(machineDiv(lnx,ln10),0)}
   }
-  return Array.from({length:max-min+1},(_,i)=>min+i);
+  c.episodes[k]={expression:`${id}(${fmt(z)})`,value:ser(value),strength:100,createdAt:Date.now()};saveBrain();return value;
+}
+async function applyFactorial(z){
+  const c=await ensureConcept("fact");await ensureDependencies("fact");remember(c);const k=hashZ(z);
+  if(c.episodes[k]&&c.episodes[k].strength>0)return de(c.episodes[k].value);
+  if(!z.isReal()||!Number.isSafeInteger(z.re)||z.re<0||z.re>170){think(L("Такой факториал пока не умею строить.","I cannot construct that factorial yet."),"bad");return new Complex(NaN,NaN)}
+  let r=1;for(let n=2;n<=z.re;n++){r=mulIntCore(r,n);if(n<=7||n===z.re){think(L(`перемножаю до ${n}: ${r}`,`multiplying through ${n}: ${r}`),"research");await sleep(120)}}
+  const v=new Complex(r,0);c.episodes[k]={expression:`${fmt(z)}!`,value:ser(v),strength:100,createdAt:Date.now()};saveBrain();return v;
 }
 
-function renderMemory() {
-  renderMemorySelect();
-
-  const summary=$("memorySummary");
-  const wrap=$("memoryTableWrap");
-  const episodes=$("episodeList");
-
-  if (!selectedMemoryKey || !brain.concepts[selectedMemoryKey]) {
-    summary.textContent="Внутри пока нет ни одного математического понятия.";
-    wrap.innerHTML='<div class="empty-state">таблиц нет</div>';
-    episodes.innerHTML="";
-    return;
+/* ---------------------------- evaluator ---------------------------- */
+async function evalNode(node){
+  if(node.type==="number")return new Complex(node.value,0);
+  if(node.type==="constant"){
+    if(node.name==="i"){await ensureConcept("imag");return new Complex(0,1)}
+    if(node.name==="pi")return new Complex(await derivePi(),0);
+    if(node.name==="e")return new Complex(await deriveE(),0);
   }
-
-  const c=brain.concepts[selectedMemoryKey];
-  const table=c.table;
-  const epList=Object.values(c.episodes).sort((a,b)=>b.createdAt-a.createdAt);
-
-  summary.textContent=
-    `«${c.label}»: целостность понятия ${Math.round(c.strength)}%. ` +
-    `${table ? `В таблице осталось ${Object.keys(table.cells).length.toLocaleString("ru-RU")} ячеек.` : "Полной таблицы нет."} ` +
-    `${epList.length} отдельных эпизодов.`;
-
-  if (!table) {
-    wrap.innerHTML='<div class="empty-state">Это знание хранится не таблицей, а отдельными эпизодами.</div>';
-  } else {
-    const range=memoryRange(table);
-    let html='<table class="memory-table"><thead><tr><th>a \\ b</th>';
-    for (const b of range) html+=`<th>${b}</th>`;
-    html+='</tr></thead><tbody>';
-
-    for (const a of range) {
-      html+=`<tr><td>${a}</td>`;
-      for (const b of range) {
-        const cell=table.cells[`${a},${b}`];
-        if (!cell) {
-          html+='<td class="memory-cell dead">·</td>';
-        } else {
-          const strength=clamp(cell.strength,0,100);
-          html+=`<td class="memory-cell" style="opacity:${0.18+0.82*strength/100}" title="целостность ${Math.round(strength)}%">${escapeHtml(fmt(deserializeComplex(cell.value)))}</td>`;
-        }
-      }
-      html+='</tr>';
-    }
-    html+='</tbody></table>';
-    wrap.innerHTML=html;
+  if(node.type==="unary"){
+    const v=await evalNode(node.arg);if(node.op==="+")return v;await ensureConcept("sub");return new Complex(-v.re,-v.im);
   }
-
-  episodes.innerHTML=epList.length
-    ? `<h3>Эпизодические воспоминания</h3>`+
-      epList.slice(0,60).map(ep=>`
-        <div class="episode" style="opacity:${0.25+0.75*ep.strength/100}">
-          <span>${escapeHtml(ep.expression)} = ${escapeHtml(fmt(deserializeComplex(ep.value)))}</span>
-          <span>${Math.round(ep.strength)}%</span>
-        </div>`).join("")
-    : "";
+  if(node.type==="binary"){
+    const a=await evalNode(node.left),b=await evalNode(node.right);const id={"+":"add","-":"sub","*":"mul","/":"div","%":"mod","^":"pow"}[node.op];return await applyBinary(id,a,b);
+  }
+  if(node.type==="function")return await applyFunction(node.name,await evalNode(node.arg));
+  if(node.type==="postfix")return await applyFactorial(await evalNode(node.arg));
+  return new Complex(NaN,NaN);
 }
 
-function renderObserver() {
-  const box=$("observerLog");
-  if (!box) return;
-
-  box.innerHTML=observerLog.length
-    ? observerLog.slice().reverse().map(e=>`
-      <div class="${e.type || ""}">
-        <time>${new Date(e.at).toLocaleTimeString("ru-RU",{hour12:false})}</time>
-        — ${escapeHtml(e.message)}
-      </div>`).join("")
-    : "<div>Журнал пока пуст.</div>";
+/* ----------------------------- dementia ---------------------------- */
+function allConcepts(){return Object.values(brain.concepts)}
+function knowledgeCount(){let n=0;for(const c of allConcepts()){n++;if(c.table)n+=Object.keys(c.table.cells).length;n+=Object.keys(c.episodes).length;if(c.constant!=null)n++}return n}
+function memoryHealth(){
+  const cs=allConcepts();if(!cs.length)return 100;let score=0,w=0;
+  for(const c of cs){score+=c.strength*3;w+=3;if(c.table)for(const cell of Object.values(c.table.cells)){score+=cell.strength;w++}for(const ep of Object.values(c.episodes)){score+=ep.strength;w++}}
+  return w?clamp(score/w,0,100):100;
 }
-
-function renderBrainStatus() {
-  const health=memoryHealth();
-  const concepts=allConcepts();
-  const [stage,desc]=stageInfo(health);
-
-  $("brainHealth").textContent=`${Math.round(health)}%`;
-  $("knownConcepts").textContent=String(concepts.length);
-  $("brainState").textContent=concepts.length===0?"ПУСТ":stage.toUpperCase();
-  $("stageName").textContent=stage;
-  $("stageDescription").textContent=desc;
-
-  const fill=$("healthFill");
-  fill.style.width=`${health}%`;
-  fill.style.background=health>60?"var(--good)":health>30?"var(--warn)":"var(--bad)";
-
-  const left=Math.max(0,brain.nextDecayAt-Date.now());
-  const sec=Math.ceil(left/1000);
-  $("decayCountdown").textContent=`${Math.floor(sec/60)}:${String(sec%60).padStart(2,"0")}`;
+function decayCount(){return observerLog.filter(x=>x.type==="decay").length}
+function scheduleDecay(){brain.nextDecayAt=Date.now()+randomDelay(brain.decayMeanSec)}
+function damageMemory(){
+  const cs=allConcepts();if(!cs.length){scheduleDecay();saveBrain();logObserver(L("Приступ деменции прошёл впустую: мозг уже пуст.","A dementia episode had nothing to damage: the brain was already empty."),"decay");return}
+  const chosen=[...cs].sort(()=>Math.random()-.5).slice(0,Math.min(cs.length,1+Math.floor(Math.random()*3)));const reports=[];
+  for(const c of chosen){
+    c.strength=clamp(c.strength-(8+Math.random()*19),0,100);let lost=0,damaged=0;
+    if(c.table){const keys=Object.keys(c.table.cells).sort(()=>Math.random()-.5),n=Math.max(1,Math.floor(keys.length*(c.strength<35?.22:.08)));for(const k of keys.slice(0,n)){const cell=c.table.cells[k];cell.strength=clamp(cell.strength-(18+Math.random()*50),0,100);damaged++;if(cell.strength<3){delete c.table.cells[k];lost++}}}
+    const eps=Object.keys(c.episodes).sort(()=>Math.random()-.5);for(const k of eps.slice(0,Math.floor(eps.length*(c.strength<40?.25:.08)))){c.episodes[k].strength=clamp(c.episodes[k].strength-(25+Math.random()*50),0,100);if(c.episodes[k].strength<3)delete c.episodes[k]}
+    if(c.strength<2){delete brain.concepts[c.id];reports.push(L(`полностью забыто «${META[c.id].ru}»`,`completely forgot “${META[c.id].en}”`))}
+    else reports.push(L(`«${META[c.id].ru}»: повреждено ${damaged}, потеряно ${lost} ячеек`,`“${META[c.id].en}”: damaged ${damaged}, lost ${lost} cells`));
+  }
+  scheduleDecay();saveBrain();const msg=reports.join("; ");logObserver(L(`Приступ деменции: ${msg}.`,`Dementia episode: ${msg}.`),"decay");toast(L("Память дала сбой.","Memory failure."));if(!busy)think(L(`[ПАМЯТЬ ДАЛА СБОЙ] ${msg}.`,`[MEMORY FAILURE] ${msg}.`),"bad");renderAll();
 }
+function fullLobotomy(){const mean=brain.decayMeanSec;brain=freshBrain(mean);saveBrain();logObserver(L("Полная лоботомия: уничтожены все внутренние математические знания.","Full lobotomy: all internal mathematical knowledge was destroyed."),"decay");clearThinking();think(L("Я... кто?","I... who?"),"bad");think(L("Что такое число?","What is a number?"),"confuse");$("result").dataset.touched="";$("result").textContent=tr("emptyBrain");renderAll()}
+function stageInfo(h){if(h>=82)return[tr("stage0"),tr("stage0d")];if(h>=62)return[tr("stage1"),tr("stage1d")];if(h>=40)return[tr("stage2"),tr("stage2d")];if(h>=18)return[tr("stage3"),tr("stage3d")];return[tr("stage4"),tr("stage4d")]}
 
-function renderAll() {
-  renderConcepts();
-  renderMemory();
-  renderObserver();
-  renderBrainStatus();
+/* ------------------------------- stats ----------------------------- */
+function recordStats(force=false){
+  const now=Date.now(),last=statsHistory[statsHistory.length-1];if(!force&&last&&now-last.t<5000)return;
+  statsHistory.push({t:now,health:memoryHealth(),knowledge:knowledgeCount(),concepts:allConcepts().length,decays:decayCount()});statsHistory=statsHistory.slice(-500);saveStats();
 }
+function drawLineChart(canvas,key,maxFixed=null){
+  const ctx=canvas.getContext("2d"),w=canvas.width,h=canvas.height;ctx.clearRect(0,0,w,h);ctx.fillStyle="#0a0c0f";ctx.fillRect(0,0,w,h);
+  const data=statsHistory.slice(-120);ctx.strokeStyle="#2e343d";ctx.lineWidth=1;
+  for(let i=1;i<4;i++){const y=20+(h-40)*i/4;ctx.beginPath();ctx.moveTo(42,y);ctx.lineTo(w-12,y);ctx.stroke()}
+  ctx.fillStyle="#6f7782";ctx.font="11px monospace";if(!data.length){ctx.fillText(L("пока нет данных","no data yet"),52,h/2);return}
+  let max=maxFixed??Math.max(1,...data.map(d=>d[key]));let min=maxFixed?0:Math.min(0,...data.map(d=>d[key]));if(max===min)max=min+1;
+  ctx.strokeStyle="#cbd9a6";ctx.lineWidth=2;ctx.beginPath();data.forEach((d,i)=>{const x=42+(w-58)*(data.length===1?0:i/(data.length-1)),y=h-22-(h-42)*(d[key]-min)/(max-min);if(i===0)ctx.moveTo(x,y);else ctx.lineTo(x,y)});ctx.stroke();
+  ctx.fillStyle="#89929d";ctx.fillText(String(clean(max)),5,18);ctx.fillText(String(clean(min)),5,h-20);
+}
+function renderCharts(){drawLineChart($("healthChart"),"health",100);drawLineChart($("knowledgeChart"),"knowledge");drawLineChart($("conceptChart"),"concepts");drawLineChart($("decayChart"),"decays")}
 
-/* ------------------------- Main action ----------------------- */
+/* ------------------------------- render ---------------------------- */
+function escapeHtml(s){return String(s).replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;")}
+function renderConcepts(){
+  const list=$("conceptList"),cs=allConcepts().sort((a,b)=>b.lastSeen-a.lastSeen);if(!cs.length){list.innerHTML=`<div class="empty-state">${tr("empty")}</div>`;return}
+  list.innerHTML=cs.map(c=>{const meta=META[c.id],count=(c.table?Object.keys(c.table.cells).length:0)+Object.keys(c.episodes).length+(c.constant!=null?1:0);return`<div class="concept"><strong>${escapeHtml(meta.symbol)} — ${escapeHtml(labelOf(c.id))}</strong><span class="strength">${Math.round(c.strength)}%</span><small>${c.table?`${c.table.min}…${c.table.max}`:L("алгоритм/эпизоды","algorithm/episodes")} · ${count}</small><small>${c.strength<30?L("путается","confused"):c.strength<60?L("помнит неуверенно","uncertain"):L("помнит","remembers")}</small><div class="minihealth"><i style="width:${c.strength}%"></i></div></div>`}).join("");
+}
+function renderMemorySelect(){const s=$("memoryConcept"),cs=allConcepts();if(!cs.length){s.innerHTML=`<option>${tr("memoryEmpty")}</option>`;selectedMemoryKey=null;return}if(!selectedMemoryKey||!brain.concepts[selectedMemoryKey])selectedMemoryKey=cs[0].id;s.innerHTML=cs.map(c=>`<option value="${c.id}" ${c.id===selectedMemoryKey?"selected":""}>${META[c.id].symbol} — ${escapeHtml(labelOf(c.id))}</option>`).join("")}
+function viewRange(t){if(!t)return[];let min=t.min,max=t.max;if(max-min+1>TABLE_VIEW_LIMIT){if(min<=0&&max>=0){min=Math.max(min,-6);max=Math.min(max,10)}else max=Math.min(max,min+TABLE_VIEW_LIMIT-1)}return Array.from({length:max-min+1},(_,i)=>min+i)}
+function renderMemory(){
+  renderMemorySelect();const summary=$("memorySummary"),wrap=$("memoryTableWrap"),eps=$("episodeList");if(!selectedMemoryKey||!brain.concepts[selectedMemoryKey]){summary.textContent=L("Внутри пока нет математических понятий.","There are no mathematical concepts inside yet.");wrap.innerHTML=`<div class="empty-state">${tr("noTables")}</div>`;eps.innerHTML="";return}
+  const c=brain.concepts[selectedMemoryKey],t=c.table,e=Object.values(c.episodes).sort((a,b)=>b.createdAt-a.createdAt);summary.textContent=L(`«${META[c.id].ru}»: целостность ${Math.round(c.strength)}%. ${t?`В таблице осталось ${Object.keys(t.cells).length} ячеек.`:"Таблицы нет."} ${e.length} эпизодов.`,`“${META[c.id].en}”: integrity ${Math.round(c.strength)}%. ${t?`${Object.keys(t.cells).length} table cells remain.`:"No table."} ${e.length} episodes.`);
+  if(!t)wrap.innerHTML=`<div class="empty-state">${L("Это знание хранится алгоритмом и отдельными эпизодами.","This knowledge is stored as an algorithm and episodic memories.")}</div>`;
+  else{const r=viewRange(t);let html='<table class="memory-table"><thead><tr><th>a \\ b</th>';for(const b of r)html+=`<th>${b}</th>`;html+='</tr></thead><tbody>';for(const a of r){html+=`<tr><td>${a}</td>`;for(const b of r){const cell=t.cells[`${a},${b}`];html+=cell?`<td class="memory-cell" style="opacity:${.18+.82*cell.strength/100}" title="${Math.round(cell.strength)}%">${escapeHtml(fmt(de(cell.value)))}</td>`:'<td class="memory-cell dead">·</td>'}html+='</tr>'}wrap.innerHTML=html+'</tbody></table>'}
+  eps.innerHTML=e.length?`<h3>${tr("episodes")}</h3>`+e.slice(0,60).map(x=>`<div class="episode" style="opacity:${.25+.75*x.strength/100}"><span>${escapeHtml(x.expression)} = ${escapeHtml(fmt(de(x.value)))}</span><span>${Math.round(x.strength)}%</span></div>`).join(""):"";
+}
+function renderObserver(){const box=$("observerLog");box.innerHTML=observerLog.length?observerLog.slice().reverse().map(e=>`<div class="${e.type||""}"><time>${new Date(e.at).toLocaleTimeString(lang==="ru"?"ru-RU":"en-GB",{hour12:false})}</time> — ${escapeHtml(e.message)}</div>`).join(""):L("<div>Журнал пуст.</div>","<div>The log is empty.</div>")}
+function renderBrain(){const h=memoryHealth(),[stage,desc]=stageInfo(h);$("brainHealth").textContent=`${Math.round(h)}%`;$("knownConcepts").textContent=String(allConcepts().length);$("brainState").textContent=allConcepts().length?stage.toUpperCase():L("ПУСТ","EMPTY");$("stageName").textContent=stage;$("stageDescription").textContent=desc;const f=$("healthFill");f.style.width=`${h}%`;f.style.background=h>60?"var(--good)":h>30?"var(--warn)":"var(--bad)";const left=Math.max(0,brain.nextDecayAt-Date.now()),s=Math.ceil(left/1000);$("decayCountdown").textContent=`${Math.floor(s/60)}:${String(s%60).padStart(2,"0")}`}
+function renderAll(){renderConcepts();renderMemory();renderObserver();renderBrain();renderCharts()}
+function applyLanguage(){document.documentElement.lang=lang;document.querySelectorAll("[data-i18n]").forEach(el=>el.textContent=tr(el.dataset.i18n));document.querySelectorAll("[data-i18n-placeholder]").forEach(el=>el.placeholder=tr(el.dataset.i18nPlaceholder));$("langRu").classList.toggle("active",lang==="ru");$("langEn").classList.toggle("active",lang==="en");if(!$("result").dataset.touched)$("result").textContent=tr("emptyBrain");$("decayIntervalLabel").textContent=`${brain.decayMeanSec} ${lang==="ru"?"с":"s"}`;renderAll()}
 
-async function calculate() {
-  if (busy) return;
-
-  const source=$("expression").value.trim();
-  if (!source) return;
-
-  busy=true;
-  $("calculate").disabled=true;
-  clearThinking();
-  showProgress(false);
-  setResult("ДУМАЮ...");
-
-  try {
-    think(`Получено выражение: ${source}`, "memory");
-
-    let ast;
-    try {
-      ast=new Parser(tokenize(source)).parse();
-      think("Синтаксис разобран. Начинаю идти по выражению изнутри наружу.", "memory");
-    } catch (err) {
-      think(`Я не смог разобрать запись: ${err.message}`, "bad");
-      setResult(`<span class="answer" style="color:var(--bad)">Не понял запись.</span><br>${escapeHtml(err.message)}`);
-      return;
-    }
-
+/* ------------------------------- action ---------------------------- */
+async function calculate(){
+  if(busy)return;const source=$("expression").value.trim();if(!source)return;busy=true;$("calculate").disabled=true;clearThinking();showProgress(false);setResult(L("ДУМАЮ...","THINKING..."));
+  try{
+    think(L(`Получено выражение: ${source}`,`Received expression: ${source}`),"memory");let ast;
+    try{ast=new Parser(tokenize(source)).parse();think(L("Разобрал синтаксис. Теперь иду изнутри выражения наружу.","Parsed the syntax. Now working from the inside of the expression outward."),"memory")}catch(err){think(err.message,"bad");setResult(`<span class="answer" style="color:var(--bad)">${L("Не понял запись.","Could not parse it.")}</span><br>${escapeHtml(err.message)}`);return}
     const value=await evalNode(ast);
-
-    if (!value.isFinite()) {
-      think("Результат вышел за границы тех знаний, которые я умею представлять.", "bad");
-      setResult(`<span class="answer" style="color:var(--bad)">не определено</span>`);
-    } else {
-      think(`Кажется, ответ у меня есть: ${fmt(value)}.`, "learn");
-      setResult(`<span class="answer">${escapeHtml(source)} = ${escapeHtml(fmt(value))}</span>`);
-      logObserver(`Решено выражение «${source}» → ${fmt(value)}.`,"memory");
-    }
-
+    if(!value.isFinite()){think(L("Я дошёл до границы текущей математической модели.","I reached the boundary of my current mathematical model."),"bad");setResult(`<span class="answer" style="color:var(--bad)">${L("не определено","undefined")}</span>`)}
+    else{think(L(`Получилось: ${fmt(value)}.`, `I got: ${fmt(value)}.`),"learn");setResult(`<span class="answer">${escapeHtml(source)} = ${escapeHtml(fmt(value))}</span>`);logObserver(L(`Решено «${source}» → ${fmt(value)}.`,`Solved “${source}” → ${fmt(value)}.`),"memory")}
     renderAll();
-
-  } finally {
-    busy=false;
-    $("calculate").disabled=false;
-  }
+  } finally{busy=false;$("calculate").disabled=false;recordStats(true)}
 }
 
-/* -------------------------- Events --------------------------- */
+/* ------------------------------- events ---------------------------- */
+document.querySelectorAll(".tabs button").forEach(btn=>btn.addEventListener("click",()=>{document.querySelectorAll(".tabs button").forEach(x=>x.classList.remove("active"));document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));btn.classList.add("active");$(btn.dataset.tab).classList.add("active");if(btn.dataset.tab==="charts")renderCharts();if(btn.dataset.tab==="memory")renderMemory()}));
+$("calculate").addEventListener("click",calculate);$("expression").addEventListener("keydown",e=>{if(e.key==="Enter")calculate()});document.querySelectorAll("[data-expr]").forEach(btn=>btn.addEventListener("click",()=>{$("expression").value=btn.dataset.expr;$("expression").focus()}));
+$("memoryConcept").addEventListener("change",e=>{selectedMemoryKey=e.target.value||null;renderMemory()});
+$("langRu").addEventListener("click",()=>{lang="ru";localStorage.setItem(LANG_KEY,lang);applyLanguage()});$("langEn").addEventListener("click",()=>{lang="en";localStorage.setItem(LANG_KEY,lang);applyLanguage()});
+$("decayInterval").value=brain.decayMeanSec;$("decayInterval").addEventListener("input",e=>$("decayIntervalLabel").textContent=`${e.target.value} ${lang==="ru"?"с":"s"}`);$("decayInterval").addEventListener("change",e=>{brain.decayMeanSec=Number(e.target.value);scheduleDecay();saveBrain();renderBrain()});
+$("damageBrain").addEventListener("click",damageMemory);$("resetBrain").addEventListener("click",fullLobotomy);
 
-document.querySelectorAll(".tabs button").forEach(btn=>{
-  btn.addEventListener("click",()=>{
-    document.querySelectorAll(".tabs button").forEach(x=>x.classList.remove("active"));
-    document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));
-    btn.classList.add("active");
-    $(btn.dataset.tab).classList.add("active");
-    if (btn.dataset.tab==="memory") renderMemory();
-  });
-});
-
-$("calculate").addEventListener("click",calculate);
-$("expression").addEventListener("keydown",e=>{
-  if (e.key==="Enter") calculate();
-});
-
-document.querySelectorAll("[data-expr]").forEach(btn=>{
-  btn.addEventListener("click",()=>{
-    $("expression").value=btn.dataset.expr;
-    $("expression").focus();
-  });
-});
-
-$("memoryConcept").addEventListener("change",e=>{
-  selectedMemoryKey=e.target.value || null;
-  renderMemory();
-});
-
-$("decayInterval").value=brain.decayMeanSec;
-$("decayIntervalLabel").textContent=`${brain.decayMeanSec} с`;
-
-$("decayInterval").addEventListener("input",e=>{
-  $("decayIntervalLabel").textContent=`${e.target.value} с`;
-});
-
-$("decayInterval").addEventListener("change",e=>{
-  brain.decayMeanSec=Number(e.target.value);
-  scheduleNextDecay();
-  saveBrain();
-  logObserver(`Средний интервал между приступами изменён на ${brain.decayMeanSec} секунд.`,"memory");
-  renderBrainStatus();
-});
-
-$("damageBrain").addEventListener("click",()=>damageSomeMemory(true));
-$("resetBrain").addEventListener("click",fullLobotomy);
-
-/* --------------------------- Boot ---------------------------- */
-
-if (!observerLog.length) {
-  logObserver("Создан новый пустой мозг. Математических понятий пока нет.","discover");
-}
-
-renderAll();
-
-setInterval(()=>{
-  if (Date.now()>=brain.nextDecayAt && !busy) {
-    damageSomeMemory(false);
-  } else {
-    renderBrainStatus();
-  }
-},500);
+/* -------------------------------- boot ----------------------------- */
+if(!observerLog.length)logObserver(L("Создан новый пустой мозг. Математики внутри нет.","Created a new empty brain. There is no mathematics inside."),"discover");
+recordStats(true);applyLanguage();
+setInterval(()=>{if(Date.now()>=brain.nextDecayAt&&!busy)damageMemory();else renderBrain();recordStats(false)},1000);
 
 })();
