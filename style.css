@@ -195,3 +195,80 @@ main{min-height:570px}
 
 /* v1.0 additions */
 .title-actions{display:flex;align-items:center;gap:14px}.lang-switch{display:flex;align-items:center;gap:5px;font-size:11px;color:#aab0b8}.lang-switch button{border:0;background:transparent;color:#89919b;padding:3px 4px;cursor:pointer}.lang-switch button.active{color:#f1f2f3;text-decoration:underline}.chart-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:18px}.chart-card{border:1px solid var(--line);background:#101318;padding:12px;min-width:0}.chart-card h3{font-size:13px;margin:0 0 10px}.chart-card canvas{width:100%;height:240px;display:block;background:#0a0c0f;border:1px solid #262c34}.syntax{background:#090b0e;border:1px solid var(--line);padding:14px;color:#cfd5da;overflow:auto}.think-line.research{color:#9cc9d5}@media(max-width:900px){.chart-grid{grid-template-columns:1fr}}
+
+
+/* ====================== 1.1 language gate ====================== */
+.language-gate{
+  position:fixed;inset:0;z-index:10000;display:grid;place-items:center;
+  background:
+    linear-gradient(rgba(255,255,255,.018) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(255,255,255,.018) 1px,transparent 1px),
+    #090b0e;
+  background-size:24px 24px;
+}
+.language-gate.hidden{display:none}
+.language-gate-panel{
+  width:min(680px,calc(100% - 32px));border:1px solid var(--line);
+  background:#15181d;padding:34px;box-shadow:0 24px 80px rgba(0,0,0,.55)
+}
+.gate-kicker{color:var(--accent);letter-spacing:.16em;font-size:12px;margin-bottom:18px}
+.language-gate h1{margin:0;font-size:clamp(34px,7vw,66px);line-height:.94;letter-spacing:-.055em}
+.language-gate h1 span{color:#9199a4}
+.language-gate p{color:var(--muted);line-height:1.6;margin:20px 0}
+.gate-buttons{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.gate-buttons button{
+  min-height:70px;border:1px solid #68717d;background:#242931;color:var(--text);
+  cursor:pointer;font-size:18px;font-weight:800
+}
+.gate-buttons button:hover{background:var(--accent);color:#11140e}
+
+/* ======================== syntax reference ====================== */
+.syntax-help{
+  margin-top:10px;border:1px solid var(--line2);background:#101318
+}
+.syntax-help-title{
+  padding:9px 11px;color:var(--muted);font-size:11px;letter-spacing:.05em;
+  border-bottom:1px solid var(--line2)
+}
+.syntax-help details{border-bottom:1px solid var(--line2)}
+.syntax-help details:last-child{border-bottom:0}
+.syntax-help summary{
+  cursor:pointer;padding:8px 11px;color:#c1c7ce;font-size:12px;
+  user-select:none
+}
+.syntax-chips{display:flex;flex-wrap:wrap;gap:6px;padding:0 11px 10px}
+.syntax-chips button{
+  border:1px solid #3b424c;background:#1b1f25;color:#d9dde1;padding:6px 8px;
+  cursor:pointer
+}
+.syntax-chips button:hover{border-color:var(--accent);color:var(--accent)}
+.syntax-chips code{font:inherit}
+
+/* ========================== math plot =========================== */
+.math-plot-card{margin-bottom:20px}
+.plot-controls{
+  display:grid;grid-template-columns:minmax(260px,1fr) 135px 135px auto;
+  gap:9px;align-items:end
+}
+.plot-controls>input,.plot-controls label input{
+  width:100%;border:1px solid #505762;background:#090b0e;color:var(--text);
+  padding:10px 11px;outline:none
+}
+.plot-controls label{color:var(--muted);font-size:11px}
+.plot-controls label span{display:block;margin-bottom:4px}
+.math-canvas-wrap{
+  margin-top:14px;border:1px solid var(--line);background:#090b0e;overflow:hidden
+}
+#mathPlotCanvas{display:block;width:100%;height:auto;max-height:520px}
+.plot-info{
+  margin-top:9px;color:var(--muted);font-size:12px;line-height:1.5
+}
+.cognitive-charts{margin-top:20px}
+.symbolic-answer{font-size:18px;line-height:1.6}
+
+@media(max-width:760px){
+  .gate-buttons{grid-template-columns:1fr}
+  .plot-controls{grid-template-columns:1fr 1fr}
+  .plot-controls>input{grid-column:1/-1}
+  .plot-controls .primary{grid-column:1/-1;padding:11px}
+}

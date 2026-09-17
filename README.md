@@ -1,150 +1,238 @@
-# FAILED Calculator — dementia build
+# FAILED Calculator
 
 [**English**](README.md) · [Русский](README.ru.md)
 
-> A calculator that begins with no mathematics, discovers rules by using them, builds its own tables and procedures, and then gradually forgets what it learned.
+> A calculator that starts without mathematics, discovers it while solving problems, builds memory, and then gradually forgets what it learned.
 
-FAILED Calculator is a deliberately overengineered browser experiment about learning, memory, and computational absurdity. It is not designed to be the fastest calculator possible. The entire point is that the calculator has to acquire mathematical knowledge before it can use it reliably.
+FAILED Calculator is a browser-only mathematical experiment inspired by the exploratory feel of graphing systems and computer-algebra tools, but with one intentionally terrible property: **dementia**.
 
-## What it does
+The project treats mathematics as knowledge the calculator has to acquire. The first time it encounters an operation, function, constant, or calculus idea, it reacts to the discovery, constructs a procedure, stores what it learned, and becomes faster on familiar work. Memory damage then weakens or removes parts of that knowledge.
 
-A fresh browser session starts with an empty mathematical brain. There is no operation picker: the user writes an expression directly.
+## Highlights
+
+- full Russian / English UI;
+- full-screen language choice on the first visit;
+- free-form mathematical input rather than a fixed operation selector;
+- complex numbers such as `2+5i`;
+- explicit learned tables for small integer arithmetic;
+- step-by-step algorithms for constants and elementary functions;
+- symbolic differentiation for a useful subset of elementary expressions;
+- symbolic antiderivatives for common forms;
+- numerical definite integration and limits;
+- finite sums and products;
+- equation root finding by interval search and bisection;
+- mathematical function plotting;
+- separate charts for the calculator's cognitive history;
+- progressive memory degradation rather than a single hard reset;
+- per-tab brain state stored in `sessionStorage`;
+- no framework, backend, package manager, or build step.
+
+## Expression language
+
+### Arithmetic
 
 ```text
-2 + 2
-7 * 8
-2 + 5i
-sqrt(-1)
-sin(pi/2)
-(2+3i)*(4-i)
-12!
+a+b
+a-b
+a*b
+a/b
+a%b
+a^b
+n!
+2(3+4)
 ```
 
-The first encounter with an unfamiliar concept is intentionally slow and visible. The calculator reacts, forms a hypothesis about the operation, constructs a rule, and stores the resulting knowledge.
+Implicit multiplication is supported in forms such as `2i`, `2pi`, and `2(x+1)`.
 
-Small integer arithmetic is learned as explicit tables. More general cases are handled by learned procedures and episodic memories. Repeating something that is already well remembered is faster than learning it for the first time.
-
-Then memory starts to decay.
-
-## Progressive dementia
-
-Memory loss is gradual rather than a single periodic reset.
-
-A decay episode can:
-
-- weaken confidence in a mathematical concept;
-- damage individual cells in learned arithmetic tables;
-- completely erase some table cells;
-- weaken or remove episodic examples;
-- eventually erase the concept of an operation itself.
-
-The **Memory** view exposes that process directly. Healthy cells remain bright, damaged cells fade, and forgotten cells become holes.
-
-A partially forgotten operation can be reconstructed when it appears again. A completely forgotten operation is experienced as a new discovery.
-
-The external **Observer Log** and **Charts** are deliberately outside the calculator's brain, so they survive its memory loss and show the full learning/decay cycle.
-
-## Mathematics model
-
-The expression evaluator does not use `eval()` and does not simply map parsed expressions to native transcendental functions.
-
-The project intentionally derives results through learned methods:
-
-| Concept | Method |
-| --- | --- |
-| Addition | successor / predecessor recurrence and explicit tables |
-| Subtraction | inverse addition |
-| Multiplication | repeated addition and learned tables |
-| Division | repeated subtraction / long-division style reconstruction |
-| Remainder | repeated subtraction |
-| Integer powers | repeated multiplication |
-| Factorial | repeated multiplication |
-| Square root | Newton iteration |
-| `exp` | Taylor series |
-| `sin`, `cos` | Taylor series |
-| `tan` | learned sine/cosine plus division |
-| `ln` | logarithmic series |
-| `pi` | Nilakantha-series approximation |
-| `e` | reciprocal-factorial series |
-| Complex arithmetic | decomposition into learned real operations |
-
-JavaScript numbers still provide the browser's lowest-level numeric substrate. The important distinction is architectural: the evaluator does not have a hidden "just calculate the requested expression" path. New mathematical behaviour is routed through explicit learning procedures, stored knowledge, and visible derivations.
-
-## Supported syntax
+### Constants and complex numbers
 
 ```text
-+  -  *  /  %  ^  !
-( )
-
-2i
-2pi
-2(3+4)
-
 pi
 e
 i
+2+5i
+(2+3i)*(4-i)
+```
 
+### Elementary functions
+
+```text
 sqrt(x)
+root(x,n)
 abs(x)
+
 sin(x)
 cos(x)
 tan(x)
+
+asin(x)
+acos(x)
+atan(x)
+
+sinh(x)
+cosh(x)
+tanh(x)
+
 ln(x)
 log(x)
+log(x,b)
 exp(x)
 ```
 
-Complex numbers are first-class input. `2+5i` is not treated as malformed input: the calculator has to discover the imaginary unit and expand its number model.
+### Calculus
 
-The system is intentionally finite. Some domains, especially general complex logarithms and arbitrary non-integer powers, are outside the current model and are reported as boundaries of its mathematical knowledge rather than silently delegated to a native math engine.
+Symbolic derivative:
 
-## Bilingual interface
+```text
+diff(x^3 + sin(x), x)
+```
 
-The full interface is available in Russian and English. The language switch affects static UI, dynamic internal monologue, memory descriptions, dementia messages, and observer output.
+Derivative at a point:
 
-The selected interface language is kept in `localStorage`. Mathematical memory itself remains session-scoped.
+```text
+diff(x^3 + sin(x), x, 2)
+```
 
-## State model
+Symbolic antiderivative for supported forms:
 
-The calculator brain lives in `sessionStorage`.
+```text
+antiderivative(x^3 + sin(x), x)
+```
 
-That gives the project the intended behaviour:
+Definite integral:
 
-- a new visitor starts with an empty brain;
-- a reload in the same tab keeps the current brain;
-- different visitors do not share mathematical memories;
-- closing the browser session discards that calculator's personality;
-- observer statistics are local to the same session and never leave the browser.
+```text
+integrate(sin(x), x, 0, pi)
+```
 
-There is no backend, account system, analytics service, or network API.
+Limit:
 
-## Charts
+```text
+limit(sin(x)/x, x, 0)
+```
 
-The Charts section records the calculator's cognitive history over time:
+### Discrete analysis and equation solving
 
-- memory integrity;
-- amount of stored knowledge;
-- number of known concepts;
-- cumulative dementia episodes.
+```text
+sum(1/n^2, n, 1, 100)
+product(n, n, 1, 8)
 
-Charts are rendered directly to `<canvas>` without a charting dependency.
+solve(x^2-2, x, 0, 2)
+
+gcd(84,30)
+lcm(12,18)
+ncr(10,3)
+npr(10,3)
+min(5,8)
+max(5,8)
+```
+
+### Graphs
+
+Explicit plot command:
+
+```text
+plot(sin(x)+x/4, x, -10, 10)
+```
+
+A free expression containing exactly one variable is also treated as a function and plotted automatically:
+
+```text
+sin(x)+x/4
+```
+
+The **Graphs** tab contains both the mathematical plotter and the external observer's charts of memory health, stored knowledge, concept count, and dementia episodes.
+
+## How the mathematical engine works
+
+The browser's `Number` type is still the physical substrate, but the evaluator does not hand complete expressions to `eval()` or a hidden general-purpose calculator.
+
+The intended model is deliberately inefficient:
+
+- integer addition uses successor/predecessor stepping;
+- multiplication is derived from repeated addition;
+- division uses repeated subtraction / long division;
+- powers and factorials are derived from multiplication;
+- `pi` is approximated with the Nilakantha series;
+- `e` is built from reciprocal factorials;
+- square and nth roots use Newton iterations;
+- `sin`, `cos`, and `exp` use series;
+- logarithms use an explicit convergent series with range reduction;
+- inverse trigonometric functions use identities and an arctangent series;
+- definite integration uses Simpson's rule;
+- limits are approached from both sides;
+- equation solving uses bracketing and bisection;
+- plotting samples the learned evaluator across an interval.
+
+Inside calculus and plotting, the UI suppresses repetitive inner-monologue spam while still using the same explicit numerical procedures.
+
+## Symbolic mathematics
+
+FAILED Calculator includes a small symbolic layer.
+
+Differentiation currently understands common combinations of:
+
+- constants and variables;
+- sums and differences;
+- products and quotients;
+- powers;
+- `sin`, `cos`, `tan`;
+- `sinh`, `cosh`, `tanh`;
+- `exp`, `ln`, `log`, `sqrt`.
+
+The antiderivative engine intentionally has a smaller rulebook. It recognizes common polynomial forms, sums, constant multiples, `1/x`, `sin(x)`, `cos(x)`, and `exp(x)`.
+
+When a symbolic closed form is outside the current rulebook, the calculator says so instead of fabricating one.
+
+## Dementia model
+
+Forgetting is progressive.
+
+A dementia episode may:
+
+- reduce confidence in a concept;
+- weaken random table cells;
+- delete individual arithmetic memories;
+- erase episodic function results;
+- eventually erase the concept itself.
+
+A weak concept may be vaguely recognized and reconstructed later. A fully lost concept is experienced as a new mathematical discovery again.
+
+The **Observer Log** lives outside the brain, so it survives memory loss.
+
+## Computation safety
+
+The project is intentionally inefficient, but it should not freeze a browser tab indefinitely.
+
+Every expression runs inside a cooperative work budget. Expensive algorithms record their latest meaningful checkpoint. If the next step would require unreasonable tight-loop work, the current computation stops, everything learned so far is preserved, and the UI reports the best partial result reached.
+
+The safety system is not a fallback calculator: unfinished work is never replaced with a hidden native answer.
+
+## State and privacy
+
+There is no backend.
+
+- mathematical memory: `sessionStorage`;
+- observer history: `sessionStorage`;
+- cognitive chart history: `sessionStorage`;
+- language choice: `localStorage`.
+
+A new browser session starts with a fresh mathematical brain. Different visitors do not share memories.
 
 ## Project structure
 
 ```text
-index.html       UI structure
-style.css        workstation-style interface
-app.js           parser, learning engine, memory, dementia, charts, i18n
-README.md        English documentation
-README.ru.md     Russian documentation
-.nojekyll        static-host compatibility marker
+index.html
+style.css
+app.js
+README.md
+README.ru.md
+.nojekyll
 ```
-
-The project intentionally has no framework, package manager, build step, database, or runtime dependency.
 
 ## Local development
 
-Any static file server is enough. For example:
+Any static HTTP server is enough:
 
 ```bash
 python -m http.server 8000
@@ -152,42 +240,6 @@ python -m http.server 8000
 
 Then open `http://localhost:8000`.
 
-For quick syntax validation of the JavaScript:
+## Scope
 
-```bash
-node --check app.js
-```
-
-## Design principles
-
-1. **Learning must be visible.** New mathematics should take noticeable time and produce an internal monologue.
-2. **Memory must be inspectable.** Learned tables and damaged cells are part of the UI, not hidden implementation details.
-3. **Forgetting must have consequences.** Dementia changes future computation rather than merely changing a progress bar.
-4. **No fake complex-number rejection.** Strange input should trigger discovery when it is inside the supported mathematical model.
-5. **No hidden instant-calculator path.** The evaluator should prefer learned tables, derivations, and explicit numerical methods.
-6. **The joke should remain technically interesting.** The absurdity works better when the underlying system is real.
-
-## Computation safety
-
-FAILED Calculator is intentionally inefficient, but it should not be allowed to freeze the page indefinitely.
-
-Every expression runs inside a cooperative work budget. Expensive step-by-step algorithms keep checkpoints of their latest meaningful intermediate state. If an operation would require an unreasonable amount of tight-loop work, the calculator stops the current thought, preserves everything it learned up to that point, and reports the latest approximation or partial result.
-
-For example, deriving `e` through reciprocal factorials may eventually make the intentionally primitive multiplication algorithm too expensive. In that case the UI reports the best partial approximation reached instead of silently switching to `Math.E` or locking the browser tab.
-
-The safety budget is **not** a fallback calculator. It never replaces unfinished work with a hidden native answer.
-
-## Known limitations
-
-- The model is an educational/artistic simulation of mathematical learning, not a computer algebra system.
-- JavaScript floating-point limitations still apply to approximate real-valued calculations.
-- General symbolic algebra is not implemented.
-- General complex logarithms and arbitrary complex powers are intentionally incomplete.
-- Large learned tables are capped to keep the browser responsive; larger cases become algorithmic/episodic knowledge instead.
-- The dementia model is fictional software behaviour and is not intended as a medical model of human dementia.
-
-## Contributing
-
-Issues and pull requests are welcome. Useful directions include new derivation strategies, better memory-decay behaviour, additional mathematical concepts, accessibility improvements, parser tests, and better visualization of learned knowledge.
-
-When adding a mathematical feature, prefer an explicit derivation or learning process over a direct native-function shortcut.
+FAILED Calculator is not a complete computer algebra system. The direction is deliberately closer to a **Wolfram/Desmos-like playground with a deteriorating learned memory** than to a conventional calculator: more notation, more symbolic rules, more numerical methods, richer plots, and increasingly strange behavior as knowledge decays.

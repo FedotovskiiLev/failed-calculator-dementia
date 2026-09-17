@@ -2,7 +2,7 @@
 "use strict";
 
 /* ============================================================
-   FAILED CALCULATOR 1.0.1
+   FAILED CALCULATOR 1.1.0
 
    The expression evaluator deliberately does not dispatch an
    expression straight to JavaScript arithmetic or eval().
@@ -19,9 +19,9 @@
    but there is no "native calculator" shortcut for the answer.
    ============================================================ */
 
-const BRAIN_KEY = "failed-calculator-brain-v3";
-const LOG_KEY = "failed-calculator-observer-log-v3";
-const STATS_KEY = "failed-calculator-stats-v3";
+const BRAIN_KEY = "failed-calculator-brain-v4";
+const LOG_KEY = "failed-calculator-observer-log-v4";
+const STATS_KEY = "failed-calculator-stats-v4";
 const LANG_KEY = "failed-calculator-language";
 const TABLE_LIMIT = 18;
 const TABLE_VIEW_LIMIT = 17;
@@ -105,48 +105,69 @@ function budgetChunk(i, total, chunk=256, technical="") {
 
 const I18N = {
   ru: {
-    kicker:"НЕЙРОДЕГЕНЕРАТИВНАЯ АРИФМЕТИЧЕСКАЯ СИСТЕМА",
-    hero:"Пишите выражение целиком. Калькулятор начинает сеанс без математики, открывает правила по ходу работы, строит таблицы и алгоритмы, а затем постепенно теряет ячейки, понятия и целые разделы собственного образования.",
+    kicker:"НЕЙРОДЕГЕНЕРАТИВНАЯ МАТЕМАТИЧЕСКАЯ СИСТЕМА",
+    hero:"Пишите выражение целиком. Калькулятор начинает сеанс без математики, открывает арифметику, функции и математический анализ по ходу работы, строит таблицы и алгоритмы, рисует функции — а затем постепенно забывает собственное образование.",
     status:"состояние", memoryHealth:"здоровье памяти", knownConcepts:"понятий помнит", nextEpisode:"следующий эпизод",
     tabCalculator:"КАЛЬКУЛЯТОР", tabMemory:"ПАМЯТЬ", tabCharts:"ГРАФИКИ", tabObserver:"ЖУРНАЛ НАБЛЮДАТЕЛЯ", tabDementia:"ДЕМЕНЦИЯ", tabAbout:"О ПРОЕКТЕ",
-    experienceTitle:"МАТЕМАТИЧЕСКИЙ ОПЫТ", expressionPlaceholder:"например: 2 + 5i", thinkButton:"ДУМАТЬ", tryExamples:"попробуйте:", thinkingPlaceholder:"Внутренний монолог появится здесь.", rememberTitle:"ЧТО ОН СЕЙЧАС ПОМНИТ",
+    experienceTitle:"МАТЕМАТИЧЕСКИЙ ОПЫТ", expressionPlaceholder:"пишите выражение: integrate(sin(x),x,0,pi)", thinkButton:"ДУМАТЬ",
+    thinkingPlaceholder:"Внутренний монолог появится здесь.", rememberTitle:"ЧТО ОН СЕЙЧАС ПОМНИТ",
+    syntaxHelpTitle:"ШПАРГАЛКА ПО СИНТАКСИСУ — нажмите на запись, чтобы вставить её",
+    syntaxArithmetic:"Арифметика и запись выражений",
+    syntaxNumbers:"Константы и комплексные числа",
+    syntaxFunctions:"Элементарные функции",
+    syntaxCalculus:"Производные, первообразные, интегралы и пределы",
+    syntaxAnalysis:"Суммы, произведения, уравнения, графики и дискретные функции",
     internalMemory:"ВНУТРЕННЯЯ ПАМЯТЬ", memorySubtitle:"Ячейки тускнеют по мере деградации и исчезают, когда забыты.",
+    mathPlotTitle:"МАТЕМАТИЧЕСКИЙ ГРАФИК",
+    mathPlotSubtitle:"Можно вызвать график отсюда или прямо из калькулятора через plot(f(x),x,a,b). Свободное выражение с x тоже автоматически считается функцией.",
+    plotExpressionPlaceholder:"например: sin(x) + x/4", plotFrom:"от x =", plotTo:"до x =", plotButton:"ПОСТРОИТЬ", plotEmpty:"График ещё не построен.",
     chartsTitle:"ГРАФИКИ КОГНИТИВНОЙ ЖИЗНИ", chartsSubtitle:"Данные записывает внешний наблюдатель, поэтому история переживает приступы забывания.",
     chartHealth:"Целостность памяти", chartKnowledge:"Количество сохранённых знаний", chartConcepts:"Число известных понятий", chartDecay:"Накопленные приступы деменции",
     observerTitle:"ЖУРНАЛ ВНЕШНЕГО НАБЛЮДАТЕЛЯ", observerSubtitle:"Журнал находится «снаружи мозга» и переживает его забывание.",
     dementiaTitle:"ПАРАМЕТРЫ КОГНИТИВНОГО РАСПАДА", decayInterval:"Средний интервал между приступами:", decayHelp:"Приступ повреждает случайные понятия, ослабляет воспоминания и вырывает отдельные ячейки таблиц.", triggerEpisode:"ВЫЗВАТЬ ПРИСТУП", lobotomy:"ПОЛНАЯ ЛОБОТОМИЯ", currentStage:"Текущая стадия:",
     aboutTitle:"КАК ЭТО РАБОТАЕТ",
-    aboutP1:"Это не обычный калькулятор с театральной задержкой. Он действительно хранит приобретённые таблицы и алгоритмические знания в памяти сеанса и старается выводить новое из уже открытого.",
-    aboutP2:"Сложение маленьких целых строится рекуррентно через следующий элемент; умножение выводится из повторного сложения; деление — из длинного деления; степень и факториал — из умножения. Трансцендентные функции исследуются итерациями и рядами, а комплексная арифметика раскладывается на уже изученные операции над действительными частями.",
-    aboutP3:"Поэтому первое знакомство с новой математикой действительно занимает время. Повторные примеры обычно становятся быстрее — пока деменция не вырвет нужные куски памяти.",
-    aboutP4:"Состояние мозга хранится только в sessionStorage: новый посетитель начинает с нуля, обновление той же вкладки сохраняет текущую личность калькулятора.",
-    footer:"без фреймворков · без backend · public-repo friendly",
+    aboutP1:"Это не обычный калькулятор с театральной задержкой. Он хранит приобретённые таблицы, численные методы и правила математического анализа в памяти сеанса и старается выводить новое из уже открытого.",
+    aboutP2:"Сложение маленьких целых строится шагами successor/predecessor; умножение выводится из повторного сложения; деление — из длинного деления; степень и факториал — из умножения. Корни, экспоненты, тригонометрия, логарифмы, производные, интегралы, пределы и поиск корней исследуются собственными пошаговыми алгоритмами.",
+    aboutP3:"Поэтому первое знакомство с новой математикой действительно занимает время. Повторные задачи становятся быстрее — пока деменция не повредит нужные правила, таблицы или эпизодические воспоминания.",
+    aboutP4:"Состояние мозга хранится только в sessionStorage: новый посетитель начинает с нуля, обновление той же вкладки сохраняет текущую личность калькулятора. Язык сохраняется отдельно в браузере.",
+    footer:"без фреймворков · без backend · открытый репозиторий",
     emptyBrain:"МОЗГ ПУСТ.\nЯ пока не знаю даже, что означает знак «+».", empty:"пока ничего", memoryEmpty:"память пуста", noTables:"таблиц нет", episodes:"Эпизодические воспоминания",
     stage0:"почти ясное сознание", stage0d:"Большая часть приобретённых знаний ещё держится.", stage1:"лёгкая забывчивость", stage1d:"Отдельные ячейки таблиц начинают тускнеть и выпадать.", stage2:"фрагментация памяти", stage2d:"Некоторые операции узнаются не сразу; таблицы становятся дырявыми.", stage3:"тяжёлая деградация", stage3d:"Сохранились обрывки правил и отдельные эпизоды. Знакомые знаки иногда кажутся новыми.", stage4:"почти полная амнезия", stage4d:"Остатки математики держатся на нескольких случайных воспоминаниях."
   },
   en: {
-    kicker:"NEURODEGENERATIVE ARITHMETIC SYSTEM",
-    hero:"Type a whole expression. The calculator starts each session without mathematics, discovers rules while working, builds tables and algorithms, and then gradually loses cells, concepts, and entire parts of its education.",
+    kicker:"NEURODEGENERATIVE MATHEMATICAL SYSTEM",
+    hero:"Type a whole expression. The calculator starts each session without mathematics, discovers arithmetic, functions, and calculus while working, builds tables and algorithms, draws functions — and then gradually forgets its own education.",
     status:"state", memoryHealth:"memory health", knownConcepts:"known concepts", nextEpisode:"next episode",
-    tabCalculator:"CALCULATOR", tabMemory:"MEMORY", tabCharts:"CHARTS", tabObserver:"OBSERVER LOG", tabDementia:"DEMENTIA", tabAbout:"ABOUT",
-    experienceTitle:"MATHEMATICAL EXPERIENCE", expressionPlaceholder:"for example: 2 + 5i", thinkButton:"THINK", tryExamples:"try:", thinkingPlaceholder:"The internal monologue will appear here.", rememberTitle:"WHAT IT REMEMBERS NOW",
+    tabCalculator:"CALCULATOR", tabMemory:"MEMORY", tabCharts:"GRAPHS", tabObserver:"OBSERVER LOG", tabDementia:"DEMENTIA", tabAbout:"ABOUT",
+    experienceTitle:"MATHEMATICAL EXPERIENCE", expressionPlaceholder:"type an expression: integrate(sin(x),x,0,pi)", thinkButton:"THINK",
+    thinkingPlaceholder:"The internal monologue will appear here.", rememberTitle:"WHAT IT REMEMBERS NOW",
+    syntaxHelpTitle:"SYNTAX REFERENCE — click an expression to insert it",
+    syntaxArithmetic:"Arithmetic and expression syntax",
+    syntaxNumbers:"Constants and complex numbers",
+    syntaxFunctions:"Elementary functions",
+    syntaxCalculus:"Derivatives, antiderivatives, integrals, and limits",
+    syntaxAnalysis:"Sums, products, equations, plots, and discrete functions",
     internalMemory:"INTERNAL MEMORY", memorySubtitle:"Cells fade as memory degrades and disappear when forgotten.",
+    mathPlotTitle:"MATHEMATICAL PLOT",
+    mathPlotSubtitle:"Plot from here or from the calculator with plot(f(x),x,a,b). A free expression containing x is also treated as a function automatically.",
+    plotExpressionPlaceholder:"for example: sin(x) + x/4", plotFrom:"from x =", plotTo:"to x =", plotButton:"PLOT", plotEmpty:"No mathematical plot yet.",
     chartsTitle:"CHARTS OF COGNITIVE LIFE", chartsSubtitle:"Measurements are kept by an external observer, so their history survives memory-loss episodes.",
     chartHealth:"Memory integrity", chartKnowledge:"Stored knowledge", chartConcepts:"Known concepts", chartDecay:"Cumulative dementia episodes",
     observerTitle:"EXTERNAL OBSERVER LOG", observerSubtitle:"This log exists outside the brain and survives forgetting.",
     dementiaTitle:"COGNITIVE DECAY PARAMETERS", decayInterval:"Average time between episodes:", decayHelp:"An episode damages random concepts, weakens memories, and tears individual cells out of learned tables.", triggerEpisode:"TRIGGER EPISODE", lobotomy:"FULL LOBOTOMY", currentStage:"Current stage:",
     aboutTitle:"HOW IT WORKS",
-    aboutP1:"This is not a normal calculator with theatrical delays. It actually stores acquired tables and algorithmic knowledge in session memory and tries to derive new results from what it has already discovered.",
-    aboutP2:"Small-integer addition is constructed recursively through successor steps; multiplication is derived from repeated addition; division from long division; powers and factorials from multiplication. Transcendental functions are researched with iterations and series, while complex arithmetic is reduced to already learned real operations.",
-    aboutP3:"That is why the first encounter with new mathematics genuinely takes time. Repeated examples usually become faster — until dementia removes the pieces of memory they depend on.",
-    aboutP4:"The brain exists only in sessionStorage: each new visitor starts from zero, while reloading the same tab keeps that calculator's current personality.",
-    footer:"no framework · no backend · public-repo friendly",
+    aboutP1:"This is not a normal calculator with theatrical delays. It stores acquired tables, numerical methods, and calculus rules in session memory and tries to derive new results from what it has already discovered.",
+    aboutP2:"Small-integer addition is built from successor/predecessor steps; multiplication from repeated addition; division from long division; powers and factorials from multiplication. Roots, exponentials, trigonometry, logarithms, derivatives, integrals, limits, and root finding use explicit step-by-step algorithms.",
+    aboutP3:"That is why the first encounter with new mathematics genuinely takes time. Repeated tasks become faster — until dementia damages the required rules, tables, or episodic memories.",
+    aboutP4:"The brain exists only in sessionStorage: each new visitor starts from zero, while reloading the same tab keeps that calculator's current personality. The language choice is stored separately in the browser.",
+    footer:"no framework · no backend · open repository",
     emptyBrain:"EMPTY BRAIN.\nI do not even know what the “+” sign means yet.", empty:"nothing yet", memoryEmpty:"empty memory", noTables:"no tables", episodes:"Episodic memories",
     stage0:"almost clear", stage0d:"Most acquired knowledge is still intact.", stage1:"mild forgetfulness", stage1d:"Individual table cells begin to fade and disappear.", stage2:"fragmented memory", stage2d:"Some operations are not recognized immediately; tables develop holes.", stage3:"severe degradation", stage3d:"Only fragments of rules and isolated episodes remain. Familiar symbols may look new.", stage4:"near-total amnesia", stage4d:"The remains of mathematics survive in only a few random memories."
   }
 };
 
-let lang = localStorage.getItem(LANG_KEY) || (navigator.language?.toLowerCase().startsWith("ru") ? "ru" : "en");
+const HAD_LANGUAGE = !!localStorage.getItem(LANG_KEY);
+let lang = localStorage.getItem(LANG_KEY) || "ru";
 const tr = key => I18N[lang][key] ?? I18N.ru[key] ?? key;
 const L = (ru,en) => lang === "ru" ? ru : en;
 
@@ -170,70 +191,234 @@ function fmt(z){
 const hashZ = z => { z=Complex.from(z); return `${clean(z.re)}:${clean(z.im)}`; };
 
 /* ------------------------------ parser ----------------------------- */
-const FUNCTIONS = new Set(["sqrt","abs","sin","cos","tan","ln","log","exp"]);
+const ELEMENTARY_CALLS = new Set([
+  "sqrt","root","abs",
+  "sin","cos","tan","asin","acos","atan",
+  "sinh","cosh","tanh",
+  "ln","log","exp",
+  "gcd","lcm","ncr","npr","min","max"
+]);
+
+const SPECIAL_CALLS = new Set([
+  "diff","derivative",
+  "antiderivative","anti",
+  "integrate","integral",
+  "limit","lim",
+  "sum","product","prod",
+  "solve","plot"
+]);
+
+const CALL_NAMES = new Set([...ELEMENTARY_CALLS,...SPECIAL_CALLS]);
 const CONSTANTS = new Set(["pi","e","i"]);
-function normalize(s){ return s.replaceAll("π","pi").replaceAll("×","*").replaceAll("·","*").replaceAll("÷","/").replaceAll("−","-").replaceAll("**","^").trim(); }
-function canEnd(t){ return ["number","ident",")","!"].includes(t.type); }
-function canStart(t){ return ["number","ident","("].includes(t.type); }
+
+function normalize(s){
+  return s
+    .replaceAll("π","pi")
+    .replaceAll("×","*")
+    .replaceAll("·","*")
+    .replaceAll("÷","/")
+    .replaceAll("−","-")
+    .replaceAll("**","^")
+    .trim();
+}
+
+function canEnd(t){return["number","ident",")","!"].includes(t.type)}
+function canStart(t){return["number","ident","("].includes(t.type)}
+
 function tokenize(source){
-  source=normalize(source); const raw=[]; let i=0;
+  source=normalize(source);
+  const raw=[];
+  let i=0;
+
   while(i<source.length){
-    const c=source[i]; if(/\s/.test(c)){i++;continue;}
+    const c=source[i];
+    if(/\s/.test(c)){i++;continue}
+
     const num=source.slice(i).match(/^(?:\d+(?:\.\d*)?|\.\d+)(?:e[+-]?\d+)?/i);
-    if(num){ raw.push({type:"number",value:num[0]}); i+=num[0].length; continue; }
+    if(num){
+      raw.push({type:"number",value:num[0]});
+      i+=num[0].length;
+      continue;
+    }
+
     const id=source.slice(i).match(/^[A-Za-z_][A-Za-z0-9_]*/);
-    if(id){ raw.push({type:"ident",value:id[0].toLowerCase()}); i+=id[0].length; continue; }
-    if("+-*/%^!(),".includes(c)){ raw.push({type:c,value:c}); i++; continue; }
+    if(id){
+      raw.push({type:"ident",value:id[0].toLowerCase()});
+      i+=id[0].length;
+      continue;
+    }
+
+    if("+-*/%^!(),".includes(c)){
+      raw.push({type:c,value:c});
+      i++;
+      continue;
+    }
+
     throw new Error(L(`не понимаю символ «${c}»`,`I do not understand the symbol “${c}”`));
   }
+
   const out=[];
   for(const cur of raw){
     const prev=out[out.length-1];
-    if(prev && canEnd(prev) && canStart(cur) && !(prev.type==="ident" && FUNCTIONS.has(prev.value) && cur.type==="(")) out.push({type:"*",value:"*",implicit:true});
+    if(
+      prev &&
+      canEnd(prev) &&
+      canStart(cur) &&
+      !(prev.type==="ident" && CALL_NAMES.has(prev.value) && cur.type==="(")
+    ){
+      out.push({type:"*",value:"*",implicit:true});
+    }
     out.push(cur);
   }
-  out.push({type:"EOF",value:"EOF"}); return out;
+
+  out.push({type:"EOF",value:"EOF"});
+  return out;
 }
+
 class Parser{
-  constructor(tokens){this.t=tokens;this.p=0} peek(){return this.t[this.p]} next(){return this.t[this.p++]}
+  constructor(tokens){this.t=tokens;this.p=0}
+  peek(){return this.t[this.p]}
+  next(){return this.t[this.p++]}
   match(x){if(this.peek().type===x){this.p++;return true}return false}
-  expect(x){const t=this.next();if(t.type!==x)throw new Error(L(`ожидал «${x}», увидел «${t.value}»`,`expected “${x}”, got “${t.value}”`));return t}
-  parse(){const n=this.add();if(this.peek().type!=="EOF")throw new Error(L("лишний хвост выражения","unexpected expression tail"));return n}
-  add(){let n=this.mul();while(["+","-"].includes(this.peek().type)){const op=this.next().type;n={type:"binary",op,left:n,right:this.mul()}}return n}
-  mul(){let n=this.unary();while(["*","/","%"].includes(this.peek().type)){const op=this.next().type;n={type:"binary",op,left:n,right:this.unary()}}return n}
-  unary(){if(this.match("+"))return{type:"unary",op:"+",arg:this.unary()};if(this.match("-"))return{type:"unary",op:"-",arg:this.unary()};return this.power()}
-  power(){let n=this.postfix();if(this.match("^"))n={type:"binary",op:"^",left:n,right:this.unary()};return n}
-  postfix(){let n=this.primary();while(this.match("!"))n={type:"postfix",op:"!",arg:n};return n}
+  expect(x){
+    const t=this.next();
+    if(t.type!==x)throw new Error(L(`ожидал «${x}», увидел «${t.value}»`,`expected “${x}”, got “${t.value}”`));
+    return t;
+  }
+
+  parse(){
+    const n=this.add();
+    if(this.peek().type!=="EOF")throw new Error(L("лишний хвост выражения","unexpected expression tail"));
+    return n;
+  }
+
+  add(){
+    let n=this.mul();
+    while(["+","-"].includes(this.peek().type)){
+      const op=this.next().type;
+      n={type:"binary",op,left:n,right:this.mul()};
+    }
+    return n;
+  }
+
+  mul(){
+    let n=this.unary();
+    while(["*","/","%"].includes(this.peek().type)){
+      const op=this.next().type;
+      n={type:"binary",op,left:n,right:this.unary()};
+    }
+    return n;
+  }
+
+  unary(){
+    if(this.match("+"))return{type:"unary",op:"+",arg:this.unary()};
+    if(this.match("-"))return{type:"unary",op:"-",arg:this.unary()};
+    return this.power();
+  }
+
+  power(){
+    let n=this.postfix();
+    if(this.match("^"))n={type:"binary",op:"^",left:n,right:this.unary()};
+    return n;
+  }
+
+  postfix(){
+    let n=this.primary();
+    while(this.match("!"))n={type:"postfix",op:"!",arg:n};
+    return n;
+  }
+
   primary(){
     const t=this.peek();
-    if(t.type==="number"){this.next();return{type:"number",value:Number(t.value),raw:t.value}}
-    if(t.type==="ident"){
-      this.next();const name=t.value;
-      if(CONSTANTS.has(name))return{type:"constant",name};
-      if(FUNCTIONS.has(name)){this.expect("(");const arg=this.add();this.expect(")");return{type:"function",name,arg}}
-      throw new Error(L(`не знаю имени «${name}»`,`unknown name “${name}”`));
+
+    if(t.type==="number"){
+      this.next();
+      return{type:"number",value:Number(t.value),raw:t.value};
     }
-    if(this.match("(")){const n=this.add();this.expect(")");return n}
-    throw new Error(L(`ожидал число или скобку, увидел «${t.value}»`,`expected a number or parenthesis, got “${t.value}”`));
+
+    if(t.type==="ident"){
+      this.next();
+      const name=t.value;
+
+      if(CONSTANTS.has(name))return{type:"constant",name};
+
+      if(CALL_NAMES.has(name) && this.peek().type==="("){
+        this.expect("(");
+        const args=[];
+
+        if(this.peek().type!==")"){
+          args.push(this.add());
+          while(this.match(","))args.push(this.add());
+        }
+
+        this.expect(")");
+        return{type:"call",name,args};
+      }
+
+      return{type:"variable",name};
+    }
+
+    if(this.match("(")){
+      const n=this.add();
+      this.expect(")");
+      return n;
+    }
+
+    throw new Error(L(`ожидал число, имя или скобку, увидел «${t.value}»`,`expected a number, name, or parenthesis, got “${t.value}”`));
   }
 }
 
 /* ----------------------------- concepts ---------------------------- */
 const META = {
-  add:{kind:"op",symbol:"+",ru:"сложение",en:"addition"}, sub:{kind:"op",symbol:"−",ru:"вычитание",en:"subtraction"},
-  mul:{kind:"op",symbol:"×",ru:"умножение",en:"multiplication"}, div:{kind:"op",symbol:"÷",ru:"деление",en:"division"},
-  mod:{kind:"op",symbol:"%",ru:"остаток",en:"remainder"}, pow:{kind:"op",symbol:"^",ru:"степень",en:"power"},
-  fact:{kind:"postfix",symbol:"!",ru:"факториал",en:"factorial"}, imag:{kind:"const",symbol:"i",ru:"мнимая единица",en:"imaginary unit"},
-  pi:{kind:"const",symbol:"π",ru:"число π",en:"pi"}, e:{kind:"const",symbol:"e",ru:"число e",en:"Euler's number"},
-  sqrt:{kind:"fn",symbol:"√",ru:"квадратный корень",en:"square root"}, abs:{kind:"fn",symbol:"|x|",ru:"модуль",en:"absolute value"},
-  sin:{kind:"fn",symbol:"sin",ru:"синус",en:"sine"}, cos:{kind:"fn",symbol:"cos",ru:"косинус",en:"cosine"}, tan:{kind:"fn",symbol:"tan",ru:"тангенс",en:"tangent"},
-  exp:{kind:"fn",symbol:"exp",ru:"экспонента",en:"exponential"}, ln:{kind:"fn",symbol:"ln",ru:"натуральный логарифм",en:"natural logarithm"}, log:{kind:"fn",symbol:"log",ru:"десятичный логарифм",en:"base-10 logarithm"}
-};
+  add:{kind:"op",symbol:"+",ru:"сложение",en:"addition"},
+  sub:{kind:"op",symbol:"−",ru:"вычитание",en:"subtraction"},
+  mul:{kind:"op",symbol:"×",ru:"умножение",en:"multiplication"},
+  div:{kind:"op",symbol:"÷",ru:"деление",en:"division"},
+  mod:{kind:"op",symbol:"%",ru:"остаток",en:"remainder"},
+  pow:{kind:"op",symbol:"^",ru:"степень",en:"power"},
+  fact:{kind:"postfix",symbol:"!",ru:"факториал",en:"factorial"},
+
+  imag:{kind:"const",symbol:"i",ru:"мнимая единица",en:"imaginary unit"},
+  pi:{kind:"const",symbol:"π",ru:"число π",en:"pi"},
+  e:{kind:"const",symbol:"e",ru:"число e",en:"Euler's number"},
+
+  sqrt:{kind:"fn",symbol:"√",ru:"квадратный корень",en:"square root"},
+  root:{kind:"fn",symbol:"ⁿ√",ru:"корень n-й степени",en:"nth root"},
+  abs:{kind:"fn",symbol:"|x|",ru:"модуль",en:"absolute value"},
+  sin:{kind:"fn",symbol:"sin",ru:"синус",en:"sine"},
+  cos:{kind:"fn",symbol:"cos",ru:"косинус",en:"cosine"},
+  tan:{kind:"fn",symbol:"tan",ru:"тангенс",en:"tangent"},
+  asin:{kind:"fn",symbol:"asin",ru:"арксинус",en:"arcsine"},
+  acos:{kind:"fn",symbol:"acos",ru:"арккосинус",en:"arccosine"},
+  atan:{kind:"fn",symbol:"atan",ru:"арктангенс",en:"arctangent"},
+  sinh:{kind:"fn",symbol:"sinh",ru:"гиперболический синус",en:"hyperbolic sine"},
+  cosh:{kind:"fn",symbol:"cosh",ru:"гиперболический косинус",en:"hyperbolic cosine"},
+  tanh:{kind:"fn",symbol:"tanh",ru:"гиперболический тангенс",en:"hyperbolic tangent"},
+  exp:{kind:"fn",symbol:"exp",ru:"экспонента",en:"exponential"},
+  ln:{kind:"fn",symbol:"ln",ru:"натуральный логарифм",en:"natural logarithm"},
+  log:{kind:"fn",symbol:"log",ru:"логарифм",en:"logarithm"},
+
+  gcd:{kind:"discrete",symbol:"gcd",ru:"НОД",en:"greatest common divisor"},
+  lcm:{kind:"discrete",symbol:"lcm",ru:"НОК",en:"least common multiple"},
+  ncr:{kind:"discrete",symbol:"nCr",ru:"число сочетаний",en:"combinations"},
+  npr:{kind:"discrete",symbol:"nPr",ru:"число размещений",en:"permutations"},
+  min:{kind:"discrete",symbol:"min",ru:"минимум",en:"minimum"},
+  max:{kind:"discrete",symbol:"max",ru:"максимум",en:"maximum"},
+
+  diff:{kind:"calc",symbol:"d/dx",ru:"дифференцирование",en:"differentiation"},
+  antiderivative:{kind:"calc",symbol:"∫?dx",ru:"поиск первообразной",en:"antiderivative"},
+  integrate:{kind:"calc",symbol:"∫",ru:"определённый интеграл",en:"definite integration"},
+  limit:{kind:"calc",symbol:"lim",ru:"предел",en:"limit"},
+  sum:{kind:"analysis",symbol:"Σ",ru:"конечная сумма",en:"finite sum"},
+  product:{kind:"analysis",symbol:"Π",ru:"конечное произведение",en:"finite product"},
+  solve:{kind:"analysis",symbol:"=0",ru:"поиск корня уравнения",en:"root finding"},
+  plot:{kind:"analysis",symbol:"y=f(x)",ru:"график функции",en:"function plotting"}
+}
 const labelOf = id => lang==="ru"?META[id].ru:META[id].en;
 
 function randomDelay(mean){return Math.round(mean*(.65+Math.random()*.7)*1000)}
-function freshBrain(mean=42){return{version:3,createdAt:Date.now(),decayMeanSec:mean,nextDecayAt:Date.now()+randomDelay(mean),concepts:{}}}
-function loadBrain(){try{const r=sessionStorage.getItem(BRAIN_KEY);if(!r)return freshBrain();const b=JSON.parse(r);return b?.version===3?b:freshBrain()}catch{return freshBrain()}}
+function freshBrain(mean=42){return{version:4,createdAt:Date.now(),decayMeanSec:mean,nextDecayAt:Date.now()+randomDelay(mean),concepts:{}}}
+function loadBrain(){try{const r=sessionStorage.getItem(BRAIN_KEY);if(!r)return freshBrain();const b=JSON.parse(r);return b?.version===4?b:freshBrain()}catch{return freshBrain()}}
 function saveBrain(){sessionStorage.setItem(BRAIN_KEY,JSON.stringify(brain))}
 function loadJSON(key,fallback){try{return JSON.parse(sessionStorage.getItem(key)||JSON.stringify(fallback))}catch{return fallback}}
 function saveLog(){sessionStorage.setItem(LOG_KEY,JSON.stringify(observerLog.slice(-600)))}
@@ -290,6 +475,49 @@ async function ensureConcept(id){
     await dramatic([
       {ru:"Число e? Ещё одна именованная константа.",en:"The number e? Another named constant.",wait:850},
       {ru:"Попробую собрать его из суммы обратных факториалов.",en:"I will build it from the sum of reciprocal factorials.",cls:"research",wait:950}
+    ]);
+  } else if(META[id].kind==="calc"){
+    const messages={
+      diff:[
+        "Производная? То есть нас интересует не значение функции, а скорость, с которой оно меняется.",
+        "A derivative? So we care not about the function value itself, but how fast it changes."
+      ],
+      antiderivative:[
+        "Первообразная звучит как попытка обратить производную назад.",
+        "An antiderivative sounds like trying to reverse differentiation."
+      ],
+      integrate:[
+        "Интеграл... похоже, площадь собирается из огромного числа очень тонких кусочков.",
+        "An integral... apparently area is assembled from a huge number of very thin pieces."
+      ],
+      limit:[
+        "Предел спрашивает не «чему равно здесь», а «к чему всё стремится рядом».",
+        "A limit asks not “what is it here?” but “what does it approach nearby?”"
+      ]
+    }[id] || ["Мне понадобится новый раздел анализа.","I need a new branch of calculus."];
+
+    await dramatic([
+      {ru:`Новая идея: «${META[id].ru}».`,en:`A new idea: “${META[id].en}”.`,wait:1050},
+      {ru:messages[0],en:messages[1],cls:"confuse",wait:1250},
+      {ru:"Не буду брать готовую формулу. Сначала построю процедуру.",en:"I will not take a ready-made answer. I will build a procedure first.",cls:"research",wait:1050}
+    ]);
+  } else if(META[id].kind==="analysis"){
+    const messages={
+      sum:["Σ? Значит, одно правило нужно повторить по целому диапазону.","Σ? So one rule must be repeated over an entire range."],
+      product:["Π — та же идея, только теперь всё перемножается.","Π is the same idea, except everything is multiplied."],
+      solve:["Уравнение не даёт мне x. Придётся искать место, где выражение меняет знак или становится нулём.","An equation does not give me x. I need to search for where the expression crosses zero."],
+      plot:["Функцию можно не только вычислять. Её можно превратить в форму.","A function can be more than evaluated. It can become a shape."]
+    }[id] || ["Ещё один способ исследовать выражение.","Another way to investigate an expression."];
+
+    await dramatic([
+      {ru:`Обнаружен новый инструмент: «${META[id].ru}».`,en:`Discovered a new tool: “${META[id].en}”.`,wait:1000},
+      {ru:messages[0],en:messages[1],cls:"confuse",wait:1200},
+      {ru:"Хорошо. Буду делать это маленькими проверяемыми шагами.",en:"Fine. I will do it in small verifiable steps.",cls:"research",wait:900}
+    ]);
+  } else if(META[id].kind==="discrete"){
+    await dramatic([
+      {ru:`Ещё одна операция: «${META[id].ru}».`,en:`Another operation: “${META[id].en}”.`,wait:850},
+      {ru:"Попробую свести её к уже понятным целочисленным шагам.",en:"I will reduce it to integer steps I already understand.",cls:"research",wait:900}
     ]);
   } else if(META[id].kind==="fn"){
     await dramatic([
@@ -676,6 +904,10 @@ async function applyFunction(id,z){
     else {await ensureConcept("add");await ensureConcept("mul");await ensureConcept("div");value=new Complex(await deriveLnPositive(z.re),0)}
   } else if(id==="log"){
     if(!z.isReal()||z.re<=0)value=new Complex(NaN,NaN);else {await ensureConcept("ln");const lnx=await deriveLnPositive(z.re),ln10=await deriveLnPositive(10);value=new Complex(machineDiv(lnx,ln10),0)}
+  } else if(["asin","acos","atan","sinh","cosh","tanh"].includes(id)){
+    value=qElementary(id,[z]);
+    think(L(`Применяю выведенный алгоритм ${id} шаг за шагом.`,`Applying the derived ${id} algorithm step by step.`),"research");
+    await sleep(550);
   }
   c.episodes[k]={expression:`${id}(${fmt(z)})`,value:ser(value),strength:100,createdAt:Date.now()};saveBrain();return value;
 }
@@ -694,22 +926,1153 @@ async function applyFactorial(z){
   const v=new Complex(r,0);c.episodes[k]={expression:`${fmt(z)}!`,value:ser(v),strength:100,createdAt:Date.now()};saveBrain();return v;
 }
 
+
+/* -------------------- broader mathematics / calculus -------------------- */
+/* Quiet numerical procedures used inside calculus and plotting. They use
+   the same explicit arithmetic/series model, but suppress repetitive UI. */
+
+function researchComplexCore(id,a,b){
+  a=Complex.from(a);b=Complex.from(b);
+
+  if(id==="add")return new Complex(machineAdd(a.re,b.re),machineAdd(a.im,b.im));
+  if(id==="sub")return new Complex(machineSub(a.re,b.re),machineSub(a.im,b.im));
+
+  if(id==="mul"){
+    const ac=machineMul(a.re,b.re),bd=machineMul(a.im,b.im);
+    const ad=machineMul(a.re,b.im),bc=machineMul(a.im,b.re);
+    return new Complex(machineSub(ac,bd),machineAdd(ad,bc));
+  }
+
+  if(id==="div"){
+    const den=machineAdd(machineMul(b.re,b.re),machineMul(b.im,b.im));
+    if(den===0)return new Complex(NaN,NaN);
+    return new Complex(
+      machineDiv(machineAdd(machineMul(a.re,b.re),machineMul(a.im,b.im)),den),
+      machineDiv(machineSub(machineMul(a.im,b.re),machineMul(a.re,b.im)),den)
+    );
+  }
+
+  return new Complex(NaN,NaN);
+}
+
+
+function qPi(){
+  const remembered=concept("pi")?.constant;
+  if(remembered!=null)return remembered;
+  let value=3,sign=1;
+  for(let n=2,step=0;step<24;n+=2,step++){
+    budgetTick(8,L("приближаю π внутри численного метода","approximating π inside a numerical method"));
+    const den=machineMul(machineMul(n,n+1),n+2);
+    const term=machineDiv(4,den);
+    value=sign>0?machineAdd(value,term):machineSub(value,term);
+    sign=-sign;
+  }
+  return value;
+}
+
+function qE(){
+  const remembered=concept("e")?.constant;
+  if(remembered!=null)return remembered;
+  let sum=1,fact=1;
+  for(let n=1;n<=13;n++){
+    budgetTick(5,L("приближаю e внутри численного метода","approximating e inside a numerical method"));
+    fact=machineMul(fact,n);
+    sum=machineAdd(sum,machineDiv(1,fact));
+  }
+  return sum;
+}
+
+function qSqrtReal(x){
+  if(x<0)return NaN;
+  if(x===0)return 0;
+  let g=x>=1?machineDiv(x,2):1;
+  for(let i=0;i<11;i++){
+    budgetTick(4,L("итерация Ньютона для корня","Newton iteration for a root"));
+    g=machineDiv(machineAdd(g,machineDiv(x,g)),2);
+  }
+  return g;
+}
+
+function qExp(z){
+  z=Complex.from(z);
+  let sum=new Complex(1,0),term=new Complex(1,0);
+  for(let n=1;n<=20;n++){
+    budgetTick(8,L("член ряда exp","exp series term"));
+    term=researchComplexCore("mul",term,z);
+    term=researchComplexCore("div",term,new Complex(n,0));
+    sum=researchComplexCore("add",sum,term);
+  }
+  return sum;
+}
+
+function qSin(z){
+  z=Complex.from(z);
+  let sum=new Complex(0,0),term=z,zz=researchComplexCore("mul",z,z);
+  sum=researchComplexCore("add",sum,term);
+  for(let n=1;n<=10;n++){
+    budgetTick(8,L("член ряда sin","sin series term"));
+    term=researchComplexCore("mul",term,zz);
+    term=researchComplexCore("div",term,new Complex((2*n)*(2*n+1),0));
+    term=new Complex(-term.re,-term.im);
+    sum=researchComplexCore("add",sum,term);
+  }
+  return sum;
+}
+
+function qCos(z){
+  z=Complex.from(z);
+  let sum=new Complex(1,0),term=new Complex(1,0),zz=researchComplexCore("mul",z,z);
+  for(let n=1;n<=10;n++){
+    budgetTick(8,L("член ряда cos","cos series term"));
+    term=researchComplexCore("mul",term,zz);
+    term=researchComplexCore("div",term,new Complex((2*n-1)*(2*n),0));
+    term=new Complex(-term.re,-term.im);
+    sum=researchComplexCore("add",sum,term);
+  }
+  return sum;
+}
+
+function qLnPositive(x){
+  if(!(x>0))return NaN;
+  let shifts=0;
+  while(x>1.5){x=machineDiv(x,2);shifts++;budgetTick(2)}
+  while(x<0.75){x=machineMul(x,2);shifts--;budgetTick(2)}
+
+  const series=value=>{
+    const y=machineDiv(machineSub(value,1),machineAdd(value,1));
+    const y2=machineMul(y,y);
+    let term=y,sum=0;
+    for(let n=0;n<28;n++){
+      budgetTick(5,L("член ряда ln","ln series term"));
+      sum=machineAdd(sum,machineDiv(term,2*n+1));
+      term=machineMul(term,y2);
+    }
+    return machineMul(2,sum);
+  };
+
+  const ln2=series(2);
+  return machineAdd(series(x),machineMul(shifts,ln2));
+}
+
+function qAtanReal(x){
+  if(x===Infinity)return machineDiv(qPi(),2);
+  if(x===-Infinity)return -machineDiv(qPi(),2);
+  if(!Number.isFinite(x))return NaN;
+  if(x<0)return -qAtanReal(-x);
+  if(x>1)return machineSub(machineDiv(qPi(),2),qAtanReal(machineDiv(1,x)));
+
+  let term=x,sum=0,xx=machineMul(x,x),sign=1;
+  for(let n=0;n<26;n++){
+    budgetTick(4,L("член ряда atan","atan series term"));
+    const piece=machineDiv(term,2*n+1);
+    sum=sign>0?machineAdd(sum,piece):machineSub(sum,piece);
+    term=machineMul(term,xx);
+    sign=-sign;
+  }
+  return sum;
+}
+
+function qPow(a,b){
+  a=Complex.from(a);b=Complex.from(b);
+
+  if(b.isReal()&&Number.isSafeInteger(b.re)){
+    const n=absN(b.re);
+    budgetPreflight(n,L(`степень внутри анализа требует ${n} умножений`,`power inside analysis needs ${n} multiplications`));
+    let r=new Complex(1,0);
+    for(let i=0;i<n;i++){budgetTick(1);r=researchComplexCore("mul",r,a)}
+    return b.re<0?researchComplexCore("div",new Complex(1,0),r):r;
+  }
+
+  if(a.isReal()&&b.isReal()&&a.re>0){
+    return qExp(new Complex(machineMul(b.re,qLnPositive(a.re)),0));
+  }
+
+  return new Complex(NaN,NaN);
+}
+
+function qRoot(value,n){
+  value=Complex.from(value);n=Complex.from(n);
+  if(!value.isReal()||!n.isReal()||!Number.isSafeInteger(n.re)||n.re===0)return new Complex(NaN,NaN);
+
+  const degree=n.re;
+  if(value.re<0&&degree%2===0)return new Complex(0,qSqrtReal(-value.re));
+
+  const sign=value.re<0?-1:1,target=absN(value.re);
+  let g=target>=1?machineDiv(target,absN(degree)):1;
+  const p=absN(degree)-1;
+
+  for(let i=0;i<14;i++){
+    budgetTick(12,L("итерация Ньютона для корня n-й степени","Newton iteration for an nth root"));
+    let gp=1;
+    for(let j=0;j<p;j++)gp=machineMul(gp,g);
+    if(gp===0)gp=1e-12;
+    g=machineDiv(machineAdd(machineMul(p,g),machineDiv(target,gp)),absN(degree));
+  }
+
+  if(degree<0)g=machineDiv(1,g);
+  return new Complex(sign*g,0);
+}
+
+function qFactorial(n){
+  if(!Number.isSafeInteger(n)||n<0||n>170)return NaN;
+  let r=1;
+  budgetPreflight(n,L(`факториал требует ${n} последовательных множителей`,`factorial requires ${n} sequential factors`));
+  for(let i=2;i<=n;i++){budgetTick(2);r=machineMul(r,i)}
+  return r;
+}
+
+function qGcd(a,b){
+  if(!Number.isSafeInteger(a)||!Number.isSafeInteger(b))return NaN;
+  a=absN(a);b=absN(b);
+  while(b!==0){
+    budgetTick(4,L("алгоритм Евклида","Euclidean algorithm"));
+    const r=modIntCore(a,b);
+    a=b;b=absN(r);
+  }
+  return a;
+}
+
+function qNcr(n,r){
+  if(!Number.isSafeInteger(n)||!Number.isSafeInteger(r)||n<0||r<0||r>n)return NaN;
+  r=Math.min(r,n-r);
+  let out=1;
+  for(let k=1;k<=r;k++){budgetTick(5);out=machineDiv(machineMul(out,n-r+k),k)}
+  return out;
+}
+
+function qNpr(n,r){
+  if(!Number.isSafeInteger(n)||!Number.isSafeInteger(r)||n<0||r<0||r>n)return NaN;
+  let out=1;
+  for(let k=0;k<r;k++){budgetTick(4);out=machineMul(out,n-k)}
+  return out;
+}
+
+function qElementary(name,args){
+  const a=args[0]??new Complex(NaN,NaN);
+  const b=args[1]??new Complex(NaN,NaN);
+
+  if(name==="sqrt"){
+    if(a.isReal()&&a.re>=0)return new Complex(qSqrtReal(a.re),0);
+    if(a.isReal()&&a.re<0)return new Complex(0,qSqrtReal(-a.re));
+    const mag=qSqrtReal(machineAdd(machineMul(a.re,a.re),machineMul(a.im,a.im)));
+    const re=qSqrtReal(machineDiv(machineAdd(mag,a.re),2));
+    const im=qSqrtReal(machineDiv(machineSub(mag,a.re),2));
+    return new Complex(re,a.im<0?-im:im);
+  }
+
+  if(name==="root")return qRoot(a,b);
+
+  if(name==="abs"){
+    return new Complex(qSqrtReal(machineAdd(machineMul(a.re,a.re),machineMul(a.im,a.im))),0);
+  }
+
+  if(name==="sin")return qSin(a);
+  if(name==="cos")return qCos(a);
+  if(name==="tan")return researchComplexCore("div",qSin(a),qCos(a));
+  if(name==="exp")return qExp(a);
+
+  if(name==="ln"){
+    if(!a.isReal()||a.re<=0)return new Complex(NaN,NaN);
+    return new Complex(qLnPositive(a.re),0);
+  }
+
+  if(name==="log"){
+    if(!a.isReal()||a.re<=0)return new Complex(NaN,NaN);
+    const base=args.length>1?b.re:10;
+    if(!(base>0)||base===1)return new Complex(NaN,NaN);
+    return new Complex(machineDiv(qLnPositive(a.re),qLnPositive(base)),0);
+  }
+
+  if(name==="atan"){
+    if(!a.isReal())return new Complex(NaN,NaN);
+    return new Complex(qAtanReal(a.re),0);
+  }
+
+  if(name==="asin"){
+    if(!a.isReal()||a.re<-1||a.re>1)return new Complex(NaN,NaN);
+    const den=qSqrtReal(machineSub(1,machineMul(a.re,a.re)));
+    return new Complex(qAtanReal(machineDiv(a.re,den)),0);
+  }
+
+  if(name==="acos"){
+    const asin=qElementary("asin",[a]);
+    if(!asin.isFinite())return asin;
+    return new Complex(machineSub(machineDiv(qPi(),2),asin.re),0);
+  }
+
+  if(name==="sinh"){
+    const ez=qExp(a),enz=qExp(new Complex(-a.re,-a.im));
+    return researchComplexCore("div",researchComplexCore("sub",ez,enz),new Complex(2,0));
+  }
+
+  if(name==="cosh"){
+    const ez=qExp(a),enz=qExp(new Complex(-a.re,-a.im));
+    return researchComplexCore("div",researchComplexCore("add",ez,enz),new Complex(2,0));
+  }
+
+  if(name==="tanh"){
+    return researchComplexCore("div",qElementary("sinh",[a]),qElementary("cosh",[a]));
+  }
+
+  if(name==="min"||name==="max"){
+    if(!a.isReal()||!b.isReal())return new Complex(NaN,NaN);
+    return new Complex(name==="min"?(a.re<b.re?a.re:b.re):(a.re>b.re?a.re:b.re),0);
+  }
+
+  if(name==="gcd"){
+    if(!a.isReal()||!b.isReal())return new Complex(NaN,NaN);
+    return new Complex(qGcd(a.re,b.re),0);
+  }
+
+  if(name==="lcm"){
+    if(!a.isReal()||!b.isReal())return new Complex(NaN,NaN);
+    const g=qGcd(a.re,b.re);
+    if(!Number.isFinite(g)||g===0)return new Complex(0,0);
+    return new Complex(absN(machineDiv(machineMul(a.re,b.re),g)),0);
+  }
+
+  if(name==="ncr"){
+    if(!a.isReal()||!b.isReal())return new Complex(NaN,NaN);
+    return new Complex(qNcr(a.re,b.re),0);
+  }
+
+  if(name==="npr"){
+    if(!a.isReal()||!b.isReal())return new Complex(NaN,NaN);
+    return new Complex(qNpr(a.re,b.re),0);
+  }
+
+  return new Complex(NaN,NaN);
+}
+
+function freeVariables(node,out=new Set()){
+  if(!node)return out;
+  if(node.type==="variable")out.add(node.name);
+  if(node.type==="unary"||node.type==="postfix")freeVariables(node.arg,out);
+  if(node.type==="binary"){freeVariables(node.left,out);freeVariables(node.right,out)}
+  if(node.type==="call")for(const a of node.args)freeVariables(a,out);
+  return out;
+}
+
+function isVariableNode(node,name=null){
+  return node?.type==="variable"&&(name===null||node.name===name);
+}
+
+async function teachTree(node){
+  if(!node)return;
+
+  if(node.type==="constant"){
+    if(node.name==="i")await ensureConcept("imag");
+    if(node.name==="pi")await derivePi();
+    if(node.name==="e")await deriveE();
+    return;
+  }
+
+  if(node.type==="unary"){
+    await teachTree(node.arg);
+    if(node.op==="-")await ensureConcept("sub");
+    return;
+  }
+
+  if(node.type==="postfix"){
+    await teachTree(node.arg);
+    await ensureConcept("fact");
+    await ensureDependencies("fact");
+    return;
+  }
+
+  if(node.type==="binary"){
+    await teachTree(node.left);await teachTree(node.right);
+    const id={"+":"add","-":"sub","*":"mul","/":"div","%":"mod","^":"pow"}[node.op];
+    await ensureConcept(id);await ensureDependencies(id);
+    return;
+  }
+
+  if(node.type==="call"){
+    if(ELEMENTARY_CALLS.has(node.name)&&META[node.name])await ensureConcept(node.name);
+    for(const arg of node.args)await teachTree(arg);
+  }
+}
+
+function evalResearch(node,env={}){
+  budgetTick(1,L("обхожу дерево выражения","walking the expression tree"));
+
+  if(node.type==="number")return new Complex(node.value,0);
+
+  if(node.type==="variable"){
+    if(Object.prototype.hasOwnProperty.call(env,node.name))return Complex.from(env[node.name]);
+    return new Complex(NaN,NaN);
+  }
+
+  if(node.type==="constant"){
+    if(node.name==="i")return new Complex(0,1);
+    if(node.name==="pi")return new Complex(qPi(),0);
+    if(node.name==="e")return new Complex(qE(),0);
+  }
+
+  if(node.type==="unary"){
+    const v=evalResearch(node.arg,env);
+    return node.op==="+"?v:new Complex(-v.re,-v.im);
+  }
+
+  if(node.type==="postfix"){
+    const v=evalResearch(node.arg,env);
+    if(!v.isReal())return new Complex(NaN,NaN);
+    return new Complex(qFactorial(v.re),0);
+  }
+
+  if(node.type==="binary"){
+    const a=evalResearch(node.left,env),b=evalResearch(node.right,env);
+    if(node.op==="+")return researchComplexCore("add",a,b);
+    if(node.op==="-")return researchComplexCore("sub",a,b);
+    if(node.op==="*")return researchComplexCore("mul",a,b);
+    if(node.op==="/")return researchComplexCore("div",a,b);
+    if(node.op==="^")return qPow(a,b);
+    if(node.op==="%"){
+      if(!a.isReal()||!b.isReal()||b.re===0)return new Complex(NaN,NaN);
+      return new Complex(realCore("mod",a.re,b.re),0);
+    }
+  }
+
+  if(node.type==="call"&&ELEMENTARY_CALLS.has(node.name)){
+    return qElementary(node.name,node.args.map(a=>evalResearch(a,env)));
+  }
+
+  return new Complex(NaN,NaN);
+}
+
+
+/* -------------------------- symbolic AST -------------------------- */
+const N=v=>({type:"number",value:v,raw:String(v)});
+const V=name=>({type:"variable",name});
+const B=(op,left,right)=>({type:"binary",op,left,right});
+const U=(op,arg)=>({type:"unary",op,arg});
+const C=(name,...args)=>({type:"call",name,args});
+
+function isZero(n){return n?.type==="number"&&n.value===0}
+function isOne(n){return n?.type==="number"&&n.value===1}
+
+function simplifyAst(n){
+  if(!n)return n;
+
+  if(n.type==="unary"){
+    const a=simplifyAst(n.arg);
+    if(n.op==="+")return a;
+    if(a.type==="number")return N(-a.value);
+    return U("-",a);
+  }
+
+  if(n.type==="binary"){
+    const l=simplifyAst(n.left),r=simplifyAst(n.right);
+
+    if(n.op==="+"){
+      if(isZero(l))return r;
+      if(isZero(r))return l;
+      if(r.type==="unary"&&r.op==="-")return simplifyAst(B("-",l,r.arg));
+    }
+    if(n.op==="-"){
+      if(isZero(r))return l;
+      if(r.type==="unary"&&r.op==="-")return simplifyAst(B("+",l,r.arg));
+    }
+    if(n.op==="*"){if(isZero(l)||isZero(r))return N(0);if(isOne(l))return r;if(isOne(r))return l}
+    if(n.op==="/"){if(isZero(l))return N(0);if(isOne(r))return l}
+    if(n.op==="^"){if(isZero(r))return N(1);if(isOne(r))return l}
+
+    if(l.type==="number"&&r.type==="number"){
+      if(n.op==="+")return N(machineAdd(l.value,r.value));
+      if(n.op==="-")return N(machineSub(l.value,r.value));
+      if(n.op==="*")return N(machineMul(l.value,r.value));
+      if(n.op==="/"&&r.value!==0)return N(machineDiv(l.value,r.value));
+    }
+
+    return B(n.op,l,r);
+  }
+
+  if(n.type==="call")return C(n.name,...n.args.map(simplifyAst));
+  return n;
+}
+
+function astString(n,parent=0){
+  if(!n)return "?";
+  if(n.type==="number")return String(clean(n.value));
+  if(n.type==="variable")return n.name;
+  if(n.type==="constant")return n.name==="pi"?"pi":n.name;
+  if(n.type==="postfix")return `${astString(n.arg,5)}!`;
+  if(n.type==="call")return `${n.name}(${n.args.map(x=>astString(x,0)).join(", ")})`;
+  if(n.type==="unary")return `${n.op}${astString(n.arg,4)}`;
+
+  if(n.type==="binary"){
+    const prec={"+":1,"-":1,"*":2,"/":2,"%":2,"^":3}[n.op]||0;
+    const text=`${astString(n.left,prec)} ${n.op} ${astString(n.right,n.op==="^"?prec-1:prec)}`;
+    return prec<parent?`(${text})`:text;
+  }
+
+  return "?";
+}
+
+function containsVar(node,name){
+  return freeVariables(node,new Set()).has(name);
+}
+
+function diffAst(node,v){
+  if(node.type==="number"||node.type==="constant")return N(0);
+  if(node.type==="variable")return N(node.name===v?1:0);
+
+  if(node.type==="unary"){
+    const d=diffAst(node.arg,v);
+    if(!d)return null;
+    return node.op==="+"?d:U("-",d);
+  }
+
+  if(node.type==="binary"){
+    const u=node.left,w=node.right,du=diffAst(u,v),dw=diffAst(w,v);
+    if(!du||!dw)return null;
+
+    if(node.op==="+")return simplifyAst(B("+",du,dw));
+    if(node.op==="-")return simplifyAst(B("-",du,dw));
+    if(node.op==="*")return simplifyAst(B("+",B("*",du,w),B("*",u,dw)));
+    if(node.op==="/")return simplifyAst(B("/",B("-",B("*",du,w),B("*",u,dw)),B("^",w,N(2))));
+
+    if(node.op==="^"){
+      if(!containsVar(w,v)){
+        return simplifyAst(B("*",B("*",w,B("^",u,B("-",w,N(1)))),du));
+      }
+      return simplifyAst(
+        B("*",
+          B("^",u,w),
+          B("+",
+            B("*",dw,C("ln",u)),
+            B("*",w,B("/",du,u))
+          )
+        )
+      );
+    }
+    return null;
+  }
+
+  if(node.type==="call"&&node.args.length>=1){
+    const u=node.args[0],du=diffAst(u,v);
+    if(!du)return null;
+
+    if(node.name==="sin")return simplifyAst(B("*",C("cos",u),du));
+    if(node.name==="cos")return simplifyAst(B("*",U("-",C("sin",u)),du));
+    if(node.name==="tan")return simplifyAst(B("/",du,B("^",C("cos",u),N(2))));
+    if(node.name==="exp")return simplifyAst(B("*",C("exp",u),du));
+    if(node.name==="ln")return simplifyAst(B("/",du,u));
+    if(node.name==="log")return simplifyAst(B("/",du,B("*",u,C("ln",N(10)))));
+    if(node.name==="sqrt")return simplifyAst(B("/",du,B("*",N(2),C("sqrt",u))));
+    if(node.name==="sinh")return simplifyAst(B("*",C("cosh",u),du));
+    if(node.name==="cosh")return simplifyAst(B("*",C("sinh",u),du));
+    if(node.name==="tanh")return simplifyAst(B("/",du,B("^",C("cosh",u),N(2))));
+  }
+
+  return null;
+}
+
+function antiAst(node,v){
+  if(node.type==="number")return simplifyAst(B("*",node,V(v)));
+  if(node.type==="constant")return simplifyAst(B("*",node,V(v)));
+
+  if(node.type==="variable"){
+    if(node.name===v)return simplifyAst(B("/",B("^",V(v),N(2)),N(2)));
+    return simplifyAst(B("*",node,V(v)));
+  }
+
+  if(node.type==="unary"&&node.op==="-"){
+    const a=antiAst(node.arg,v);
+    return a?U("-",a):null;
+  }
+
+  if(node.type==="binary"){
+    if(node.op==="+"||node.op==="-"){
+      const a=antiAst(node.left,v),b=antiAst(node.right,v);
+      if(!a||!b)return null;
+      return simplifyAst(B(node.op,a,b));
+    }
+
+    if(node.op==="*"){
+      if(!containsVar(node.left,v)){
+        const a=antiAst(node.right,v);
+        return a?simplifyAst(B("*",node.left,a)):null;
+      }
+      if(!containsVar(node.right,v)){
+        const a=antiAst(node.left,v);
+        return a?simplifyAst(B("*",node.right,a)):null;
+      }
+    }
+
+    if(node.op==="^"&&isVariableNode(node.left,v)&&node.right.type==="number"){
+      const exponent=node.right.value;
+      if(exponent===-1)return C("ln",C("abs",V(v)));
+      return simplifyAst(B("/",B("^",V(v),N(exponent+1)),N(exponent+1)));
+    }
+
+    if(node.op==="/"&&node.left.type==="number"&&node.left.value===1&&isVariableNode(node.right,v)){
+      return C("ln",C("abs",V(v)));
+    }
+  }
+
+  if(node.type==="call"&&node.args.length===1&&isVariableNode(node.args[0],v)){
+    if(node.name==="sin")return U("-",C("cos",V(v)));
+    if(node.name==="cos")return C("sin",V(v));
+    if(node.name==="exp")return C("exp",V(v));
+  }
+
+  return null;
+}
+
+/* ---------------------- calculus / analysis tools ---------------------- */
+async function numericArg(node){
+  await teachTree(node);
+  return evalResearch(node,{});
+}
+
+async function ensureSpecial(name){
+  const canonical={
+    derivative:"diff",anti:"antiderivative",integral:"integrate",
+    lim:"limit",prod:"product"
+  }[name]||name;
+  await ensureConcept(canonical);
+  return canonical;
+}
+
+async function handleDiff(args){
+  await ensureSpecial("diff");
+
+  if(args.length<2||args.length>3||!isVariableNode(args[1])){
+    throw new Error(L("diff требует diff(выражение, переменная [, точка])","diff expects diff(expression, variable [, point])"));
+  }
+
+  const expr=args[0],v=args[1].name;
+  await teachTree(expr);
+  think(L(`Пытаюсь продифференцировать по ${v} правилом за правилом.`,`Differentiating with respect to ${v}, rule by rule.`),"research");
+  await sleep(750);
+
+  const d=simplifyAst(diffAst(expr,v));
+
+  if(args.length===2){
+    if(!d){
+      return{kind:"symbolic",text:L("Закрытую символическую производную пока не вывел.","I could not derive a closed symbolic derivative yet.")};
+    }
+
+    const text=astString(d);
+    setRunProgress(`d/d${v} = ${text}`,`d/d${v} = ${text}`);
+    think(L(`Получилась формула: ${text}`,`Derived formula: ${text}`),"learn");
+    return{kind:"symbolic",text:`d/d${v} ${astString(expr)} = ${text}`};
+  }
+
+  const point=await numericArg(args[2]);
+  if(!point.isReal())return{kind:"number",value:new Complex(NaN,NaN)};
+
+  if(d){
+    const value=evalResearch(d,{[v]:point});
+    think(L(`Подставляю ${v} = ${fmt(point)} в найденную производную.`,`Substituting ${v} = ${fmt(point)} into the derived derivative.`),"research");
+    return{kind:"number",value,annotation:`d/d${v} ${astString(expr)} = ${astString(d)}`};
+  }
+
+  think(L("Символическое правило не сработало. Перехожу к симметричной разности значений рядом с точкой.","The symbolic rule did not close. Switching to a symmetric difference around the point."),"confuse");
+
+  let h=0.1,last=new Complex(NaN,NaN);
+  for(let k=1;k<=8;k++){
+    budgetTick(30,L(`численная производная: уточнение ${k}`,`numerical derivative refinement ${k}`));
+    const left=evalResearch(expr,{[v]:new Complex(point.re-h,0)});
+    const right=evalResearch(expr,{[v]:new Complex(point.re+h,0)});
+    last=researchComplexCore("div",researchComplexCore("sub",right,left),new Complex(2*h,0));
+    setRunProgress(`производная ≈ ${fmt(last)} при h=${h}`,`derivative ≈ ${fmt(last)} at h=${h}`);
+    think(L(`h=${clean(h)} → производная ≈ ${fmt(last)}`,`h=${clean(h)} → derivative ≈ ${fmt(last)}`),"research");
+    await sleep(120);
+    h=machineDiv(h,2);
+  }
+  return{kind:"number",value:last};
+}
+
+async function handleAntiderivative(args){
+  await ensureSpecial("antiderivative");
+
+  if(args.length!==2||!isVariableNode(args[1])){
+    throw new Error(L("antiderivative требует antiderivative(выражение, переменная)","antiderivative expects antiderivative(expression, variable)"));
+  }
+
+  const expr=args[0],v=args[1].name;
+  await teachTree(expr);
+  think(L("Иду по обратным правилам производных и ищу форму, которую узнаю.","Walking backward through differentiation rules and looking for a form I recognize."),"research");
+  await sleep(850);
+
+  const a=simplifyAst(antiAst(expr,v));
+
+  if(!a){
+    think(L("Закрытая форма не нашлась. Это не значит, что интеграла нет — только что моей таблицы правил пока недостаточно.","No closed form matched. That does not mean the integral does not exist; my rulebook is simply insufficient."),"confuse");
+    return{
+      kind:"symbolic",
+      text:L(
+        `∫(${astString(expr)}) d${v} — закрытая форма пока не найдена`,
+        `∫(${astString(expr)}) d${v} — no closed form found yet`
+      )
+    };
+  }
+
+  const text=astString(a);
+  think(L(`Узнал обратный шаблон: ${text} + C`,`Recognized the reverse pattern: ${text} + C`),"learn");
+  return{kind:"symbolic",text:`∫(${astString(expr)}) d${v} = ${text} + C`};
+}
+
+async function handleIntegrate(args){
+  await ensureSpecial("integrate");
+
+  if(args.length!==4||!isVariableNode(args[1])){
+    throw new Error(L("integrate требует integrate(f(x),x,a,b)","integrate expects integrate(f(x),x,a,b)"));
+  }
+
+  const expr=args[0],v=args[1].name;
+  await teachTree(expr);
+
+  const av=await numericArg(args[2]),bv=await numericArg(args[3]);
+  if(!av.isReal()||!bv.isReal())return{kind:"number",value:new Complex(NaN,NaN)};
+
+  const a=av.re,b=bv.re,Nsteps=64;
+  const h=machineDiv(machineSub(b,a),Nsteps);
+
+  think(L(`Разбиваю [${clean(a)}, ${clean(b)}] на ${Nsteps} маленьких промежутков и применяю правило Симпсона.`,`Splitting [${clean(a)}, ${clean(b)}] into ${Nsteps} small intervals and applying Simpson's rule.`),"research");
+  await sleep(700);
+
+  let sum=researchComplexCore("add",evalResearch(expr,{[v]:new Complex(a,0)}),evalResearch(expr,{[v]:new Complex(b,0)}));
+  showProgress(true,0,L("собираю площадь из узких полос","assembling area from thin strips"));
+
+  for(let i=1;i<Nsteps;i++){
+    budgetTick(18,L(`интеграл: узел ${i} из ${Nsteps}`,`integral: node ${i} of ${Nsteps}`));
+    const x=machineAdd(a,machineMul(i,h));
+    const y=evalResearch(expr,{[v]:new Complex(x,0)});
+    const weight=i%2===0?2:4;
+    sum=researchComplexCore("add",sum,researchComplexCore("mul",new Complex(weight,0),y));
+
+    if(i%8===0||i===Nsteps-1){
+      showProgress(true,i/Nsteps*100,L(`узел ${i} / ${Nsteps}`,`node ${i} / ${Nsteps}`));
+      const partial=researchComplexCore("mul",sum,new Complex(machineDiv(h,3),0));
+      setRunProgress(`интеграл ≈ ${fmt(partial)} после ${i} внутренних узлов`,`integral ≈ ${fmt(partial)} after ${i} interior nodes`);
+      think(L(`обработано ${i}/${Nsteps}; текущая площадь ≈ ${fmt(partial)}`,`processed ${i}/${Nsteps}; current area ≈ ${fmt(partial)}`),"research");
+      await sleep(80);
+    }
+  }
+
+  showProgress(false);
+  return{kind:"number",value:researchComplexCore("mul",sum,new Complex(machineDiv(h,3),0))};
+}
+
+async function handleLimit(args){
+  await ensureSpecial("limit");
+
+  if(args.length!==3||!isVariableNode(args[1])){
+    throw new Error(L("limit требует limit(f(x),x,a)","limit expects limit(f(x),x,a)"));
+  }
+
+  const expr=args[0],v=args[1].name;
+  await teachTree(expr);
+
+  const point=await numericArg(args[2]);
+  if(!point.isReal())return{kind:"number",value:new Complex(NaN,NaN)};
+
+  think(L("Подхожу к точке одновременно слева и справа, каждый раз уменьшая расстояние вдвое.","Approaching the point from both sides and halving the distance each time."),"research");
+
+  let h=1,last=new Complex(NaN,NaN);
+
+  for(let k=1;k<=12;k++){
+    budgetTick(25,L(`предел: приближение ${k}`,`limit refinement ${k}`));
+    const left=evalResearch(expr,{[v]:new Complex(point.re-h,0)});
+    const right=evalResearch(expr,{[v]:new Complex(point.re+h,0)});
+
+    if(left.isFinite()&&right.isFinite()){
+      last=researchComplexCore("div",researchComplexCore("add",left,right),new Complex(2,0));
+      setRunProgress(`lim ≈ ${fmt(last)} при h=${h}`,`lim ≈ ${fmt(last)} at h=${h}`);
+      think(L(`h=${clean(h)}: слева ${fmt(left)}, справа ${fmt(right)} → ${fmt(last)}`,`h=${clean(h)}: left ${fmt(left)}, right ${fmt(right)} → ${fmt(last)}`),"research");
+    }
+
+    await sleep(110);
+    h=machineDiv(h,2);
+  }
+
+  return{kind:"number",value:last};
+}
+
+async function integerBounds(aNode,bNode){
+  const a=await numericArg(aNode),b=await numericArg(bNode);
+  if(!a.isReal()||!b.isReal()||!Number.isSafeInteger(a.re)||!Number.isSafeInteger(b.re))return null;
+  return[a.re,b.re];
+}
+
+async function handleRangeAggregate(name,args){
+  const canonical=await ensureSpecial(name);
+
+  if(args.length!==4||!isVariableNode(args[1])){
+    throw new Error(L(`${name} требует ${name}(f(n),n,a,b)`,`${name} expects ${name}(f(n),n,a,b)`));
+  }
+
+  const expr=args[0],v=args[1].name;
+  await teachTree(expr);
+  const bounds=await integerBounds(args[2],args[3]);
+  if(!bounds)return{kind:"number",value:new Complex(NaN,NaN)};
+
+  let[a,b]=bounds;
+  const step=a<=b?1:-1,count=absN(b-a)+1;
+  budgetPreflight(count*20,L(`диапазон содержит ${count} элементов`,`range contains ${count} elements`));
+
+  let acc=canonical==="sum"?new Complex(0,0):new Complex(1,0);
+
+  for(let idx=0,n=a;;idx++,n+=step){
+    budgetTick(10,L(`${canonical}: элемент ${idx+1} из ${count}`,`${canonical}: item ${idx+1} of ${count}`));
+    const value=evalResearch(expr,{[v]:new Complex(n,0)});
+    acc=canonical==="sum"?researchComplexCore("add",acc,value):researchComplexCore("mul",acc,value);
+
+    if(idx<5||idx%Math.max(1,Math.floor(count/8))===0||n===b){
+      setRunProgress(`${META[canonical].ru}: ${idx+1}/${count} → ${fmt(acc)}`,`${META[canonical].en}: ${idx+1}/${count} → ${fmt(acc)}`);
+      think(L(`шаг ${idx+1}/${count}: накоплено ${fmt(acc)}`,`step ${idx+1}/${count}: accumulated ${fmt(acc)}`),"research");
+      await sleep(70);
+    }
+
+    if(n===b)break;
+  }
+
+  return{kind:"number",value:acc};
+}
+
+async function handleSolve(args){
+  await ensureSpecial("solve");
+
+  if(args.length!==4||!isVariableNode(args[1])){
+    throw new Error(L("solve требует solve(f(x),x,a,b)","solve expects solve(f(x),x,a,b)"));
+  }
+
+  const expr=args[0],v=args[1].name;
+  await teachTree(expr);
+
+  const av=await numericArg(args[2]),bv=await numericArg(args[3]);
+  if(!av.isReal()||!bv.isReal())return{kind:"number",value:new Complex(NaN,NaN)};
+
+  let left=av.re,right=bv.re;
+  let fl=evalResearch(expr,{[v]:new Complex(left,0)}),fr=evalResearch(expr,{[v]:new Complex(right,0)});
+
+  if(!fl.isReal()||!fr.isReal())return{kind:"number",value:new Complex(NaN,NaN)};
+
+  think(L("Ищу смену знака и буду стягивать интервал пополам.","Looking for a sign change, then repeatedly shrinking the interval by half."),"research");
+
+  if(fl.re*fr.re>0){
+    think(L("На концах знак одинаковый. Быстро просматриваю интервал в поисках зацепки.","The endpoints have the same sign. Scanning the interval for a bracket."),"confuse");
+    const pieces=32;
+    let prevX=left,prevF=fl.re,found=false;
+
+    for(let i=1;i<=pieces;i++){
+      budgetTick(15);
+      const x=machineAdd(left,machineMul(machineDiv(i,pieces),machineSub(right,left)));
+      const fx=evalResearch(expr,{[v]:new Complex(x,0)});
+
+      if(fx.isReal()&&prevF*fx.re<=0){
+        left=prevX;right=x;fl=new Complex(prevF,0);fr=fx;found=true;break;
+      }
+
+      prevX=x;prevF=fx.re;
+    }
+
+    if(!found)return{kind:"symbolic",text:L("На заданном интервале я не нашёл смены знака.","I could not find a sign change on the requested interval.")};
+  }
+
+  let mid=left;
+  for(let k=1;k<=36;k++){
+    budgetTick(18,L(`бисекция: шаг ${k}`,`bisection: step ${k}`));
+    mid=machineDiv(machineAdd(left,right),2);
+    const fm=evalResearch(expr,{[v]:new Complex(mid,0)});
+    if(!fm.isReal())break;
+
+    setRunProgress(`корень ≈ ${clean(mid)}; интервал [${clean(left)}, ${clean(right)}]`,`root ≈ ${clean(mid)}; interval [${clean(left)}, ${clean(right)}]`);
+
+    if(k<=6||k%6===0||k===36){
+      think(L(`шаг ${k}: x ≈ ${clean(mid)}, f(x) ≈ ${fmt(fm)}`,`step ${k}: x ≈ ${clean(mid)}, f(x) ≈ ${fmt(fm)}`),"research");
+      await sleep(90);
+    }
+
+    if(fl.re*fm.re<=0){right=mid;fr=fm}else{left=mid;fl=fm}
+  }
+
+  return{kind:"number",value:new Complex(mid,0)};
+}
+
+
+/* ----------------------------- plotting ----------------------------- */
+let lastMathPlot=null;
+
+function switchTab(name){
+  document.querySelectorAll(".tabs button").forEach(x=>x.classList.toggle("active",x.dataset.tab===name));
+  document.querySelectorAll(".tab").forEach(x=>x.classList.toggle("active",x.id===name));
+  if(name==="charts"){renderCharts();drawMathPlot()}
+  if(name==="memory")renderMemory();
+}
+
+function drawMathPlot(){
+  const canvas=$("mathPlotCanvas");
+  if(!canvas)return;
+
+  const ctx=canvas.getContext("2d"),w=canvas.width,h=canvas.height;
+  ctx.clearRect(0,0,w,h);
+  ctx.fillStyle="#090b0e";
+  ctx.fillRect(0,0,w,h);
+
+  if(!lastMathPlot||!lastMathPlot.points.length){
+    ctx.fillStyle="#6d7580";
+    ctx.font="14px monospace";
+    ctx.fillText(tr("plotEmpty"),30,40);
+    return;
+  }
+
+  const {points,xmin,xmax,expr,varName}=lastMathPlot;
+  const finite=points.filter(p=>Number.isFinite(p.y));
+  if(!finite.length)return;
+
+  let ymin=Math.min(...finite.map(p=>p.y)),ymax=Math.max(...finite.map(p=>p.y));
+  if(ymin===ymax){ymin-=1;ymax+=1}
+  const pad=(ymax-ymin)*.08;
+  ymin-=pad;ymax+=pad;
+
+  const X=x=>44+(w-64)*(x-xmin)/(xmax-xmin);
+  const Y=y=>20+(h-48)*(ymax-y)/(ymax-ymin);
+
+  ctx.strokeStyle="#2d333b";
+  ctx.lineWidth=1;
+
+  for(let i=0;i<=8;i++){
+    const x=44+(w-64)*i/8;
+    ctx.beginPath();ctx.moveTo(x,18);ctx.lineTo(x,h-28);ctx.stroke();
+  }
+
+  for(let i=0;i<=6;i++){
+    const y=20+(h-48)*i/6;
+    ctx.beginPath();ctx.moveTo(44,y);ctx.lineTo(w-20,y);ctx.stroke();
+  }
+
+  ctx.strokeStyle="#68717c";
+
+  if(xmin<=0&&xmax>=0){
+    const x=X(0);ctx.beginPath();ctx.moveTo(x,18);ctx.lineTo(x,h-28);ctx.stroke();
+  }
+
+  if(ymin<=0&&ymax>=0){
+    const y=Y(0);ctx.beginPath();ctx.moveTo(44,y);ctx.lineTo(w-20,y);ctx.stroke();
+  }
+
+  ctx.strokeStyle="#cbd9a6";
+  ctx.lineWidth=2;
+  ctx.beginPath();
+
+  let pen=false,lastY=null;
+
+  for(const point of points){
+    if(!Number.isFinite(point.y)){pen=false;lastY=null;continue}
+
+    const x=X(point.x),y=Y(point.y);
+
+    if(lastY!==null&&absN(point.y-lastY)>(ymax-ymin)*.7)pen=false;
+
+    if(!pen){ctx.moveTo(x,y);pen=true}
+    else ctx.lineTo(x,y);
+
+    lastY=point.y;
+  }
+
+  ctx.stroke();
+
+  ctx.fillStyle="#818a95";
+  ctx.font="11px monospace";
+  ctx.fillText(`${varName}: ${clean(xmin)} … ${clean(xmax)}`,48,h-9);
+  ctx.fillText(`y: ${clean(ymin)} … ${clean(ymax)}`,w-205,h-9);
+
+  $("plotInfo").textContent=`${expr} · ${finite.length}/${points.length} ${L("точек","points")}`;
+}
+
+async function handlePlot(args,sourceLabel=null){
+  await ensureSpecial("plot");
+
+  if(args.length!==4||!isVariableNode(args[1])){
+    throw new Error(L("plot требует plot(f(x),x,a,b)","plot expects plot(f(x),x,a,b)"));
+  }
+
+  const expr=args[0],v=args[1].name;
+  await teachTree(expr);
+
+  const av=await numericArg(args[2]),bv=await numericArg(args[3]);
+  if(!av.isReal()||!bv.isReal()||av.re===bv.re){
+    return{kind:"symbolic",text:L("Не удалось определить диапазон графика.","Could not determine the plot range.")};
+  }
+
+  const xmin=av.re,xmax=bv.re,samples=241,points=[];
+
+  think(L(`Строю ${samples} пробных точек функции по ${v}.`,`Sampling ${samples} points of the function along ${v}.`),"research");
+  showProgress(true,0,L("исследую форму функции","researching the function's shape"));
+
+  for(let i=0;i<samples;i++){
+    budgetTick(8,L(`график: точка ${i+1} из ${samples}`,`plot: point ${i+1} of ${samples}`));
+
+    const x=machineAdd(
+      xmin,
+      machineMul(machineDiv(i,samples-1),machineSub(xmax,xmin))
+    );
+
+    const y=evalResearch(expr,{[v]:new Complex(x,0)});
+    points.push({x,y:y.isReal()&&y.isFinite()?y.re:NaN});
+
+    if(i%24===0||i===samples-1){
+      showProgress(true,i/(samples-1)*100,L(`точка ${i+1}/${samples}`,`point ${i+1}/${samples}`));
+      setRunProgress(`график: построено ${i+1}/${samples} точек`,`plot: sampled ${i+1}/${samples} points`);
+      await sleep(0);
+    }
+  }
+
+  showProgress(false);
+
+  lastMathPlot={
+    points,
+    xmin,
+    xmax,
+    expr:sourceLabel||astString(expr),
+    varName:v
+  };
+
+  drawMathPlot();
+  switchTab("charts");
+
+  logObserver(
+    L(
+      `Построен график «${lastMathPlot.expr}» на [${clean(xmin)}, ${clean(xmax)}].`,
+      `Plotted “${lastMathPlot.expr}” on [${clean(xmin)}, ${clean(xmax)}].`
+    ),
+    "learn"
+  );
+
+  return{
+    kind:"plot",
+    text:L(
+      "График построен во вкладке «Графики».",
+      "Plot created in the “Graphs” tab."
+    )
+  };
+}
+
+async function evaluateTop(ast,source){
+  if(ast.type==="call"){
+    const alias={
+      derivative:"diff",
+      anti:"antiderivative",
+      integral:"integrate",
+      lim:"limit",
+      prod:"product"
+    }[ast.name]||ast.name;
+
+    if(alias==="diff")return await handleDiff(ast.args);
+    if(alias==="antiderivative")return await handleAntiderivative(ast.args);
+    if(alias==="integrate")return await handleIntegrate(ast.args);
+    if(alias==="limit")return await handleLimit(ast.args);
+    if(alias==="sum"||alias==="product")return await handleRangeAggregate(alias,ast.args);
+    if(alias==="solve")return await handleSolve(ast.args);
+    if(alias==="plot")return await handlePlot(ast.args);
+  }
+
+  const vars=[...freeVariables(ast)];
+
+  if(vars.length===1){
+    const v=vars[0];
+
+    think(
+      L(
+        `В выражении осталась свободная переменная ${v}. Значит, передо мной функция, а не одно число.`,
+        `The expression still contains a free variable ${v}. This is a function, not a single number.`
+      ),
+      "shock"
+    );
+
+    await sleep(800);
+    return await handlePlot([ast,V(v),N(-10),N(10)],source);
+  }
+
+  if(vars.length>1){
+    return{
+      kind:"symbolic",
+      text:L(
+        `Вижу несколько свободных переменных (${vars.join(", ")}). Многомерные поверхности пока не рисую.`,
+        `I see several free variables (${vars.join(", ")}). I do not plot multidimensional surfaces yet.`
+      )
+    };
+  }
+
+  return{kind:"number",value:await evalNode(ast)};
+}
+
 /* ---------------------------- evaluator ---------------------------- */
+async function applyCall(name,args){
+  if(!ELEMENTARY_CALLS.has(name))return new Complex(NaN,NaN);
+
+  if(META[name])await ensureConcept(name);
+  for(const node of args)await teachTree(node);
+
+  const values=[];
+  for(const node of args)values.push(await evalNode(node));
+
+  if(
+    ["sqrt","abs","sin","cos","tan","asin","acos","atan","sinh","cosh","tanh","exp","ln","log"].includes(name) &&
+    args.length===1
+  ){
+    return await applyFunction(name,values[0]);
+  }
+
+  const c=META[name]?concept(name):null;
+  const key=values.map(hashZ).join("|");
+
+  if(c?.episodes?.[key]?.strength>0){
+    c.episodes[key].strength=clamp(c.episodes[key].strength+4,0,100);
+    saveBrain();
+    think(L("Такой набор аргументов уже исследован. Вспоминаю ответ.","I have researched these arguments before. Recalling the answer."),"memory");
+    return de(c.episodes[key].value);
+  }
+
+  const value=qElementary(name,values);
+
+  if(c){
+    c.episodes[key]={
+      expression:`${name}(${values.map(fmt).join(", ")})`,
+      value:ser(value),
+      strength:100,
+      createdAt:Date.now()
+    };
+    saveBrain();
+    think(L("Сохраняю новый функциональный эпизод в память.","Saving this new functional episode to memory."),"learn");
+  }
+
+  return value;
+}
+
 async function evalNode(node){
   if(node.type==="number")return new Complex(node.value,0);
+
+  if(node.type==="variable"){
+    throw new Error(L(`свободная переменная ${node.name}`,`free variable ${node.name}`));
+  }
+
   if(node.type==="constant"){
     if(node.name==="i"){await ensureConcept("imag");return new Complex(0,1)}
     if(node.name==="pi")return new Complex(await derivePi(),0);
     if(node.name==="e")return new Complex(await deriveE(),0);
   }
+
   if(node.type==="unary"){
-    const v=await evalNode(node.arg);if(node.op==="+")return v;await ensureConcept("sub");return new Complex(-v.re,-v.im);
+    const v=await evalNode(node.arg);
+    if(node.op==="+")return v;
+    await ensureConcept("sub");
+    return new Complex(-v.re,-v.im);
   }
+
   if(node.type==="binary"){
-    const a=await evalNode(node.left),b=await evalNode(node.right);const id={"+":"add","-":"sub","*":"mul","/":"div","%":"mod","^":"pow"}[node.op];return await applyBinary(id,a,b);
+    const a=await evalNode(node.left),b=await evalNode(node.right);
+    const id={"+":"add","-":"sub","*":"mul","/":"div","%":"mod","^":"pow"}[node.op];
+    return await applyBinary(id,a,b);
   }
-  if(node.type==="function")return await applyFunction(node.name,await evalNode(node.arg));
+
+  if(node.type==="call")return await applyCall(node.name,node.args);
   if(node.type==="postfix")return await applyFactorial(await evalNode(node.arg));
+
   return new Complex(NaN,NaN);
 }
 
@@ -772,11 +2135,12 @@ function renderMemory(){
 function renderObserver(){const box=$("observerLog");box.innerHTML=observerLog.length?observerLog.slice().reverse().map(e=>`<div class="${e.type||""}"><time>${new Date(e.at).toLocaleTimeString(lang==="ru"?"ru-RU":"en-GB",{hour12:false})}</time> — ${escapeHtml(e.message)}</div>`).join(""):L("<div>Журнал пуст.</div>","<div>The log is empty.</div>")}
 function renderBrain(){const h=memoryHealth(),[stage,desc]=stageInfo(h);$("brainHealth").textContent=`${Math.round(h)}%`;$("knownConcepts").textContent=String(allConcepts().length);$("brainState").textContent=allConcepts().length?stage.toUpperCase():L("ПУСТ","EMPTY");$("stageName").textContent=stage;$("stageDescription").textContent=desc;const f=$("healthFill");f.style.width=`${h}%`;f.style.background=h>60?"var(--good)":h>30?"var(--warn)":"var(--bad)";const left=Math.max(0,brain.nextDecayAt-Date.now()),s=Math.ceil(left/1000);$("decayCountdown").textContent=`${Math.floor(s/60)}:${String(s%60).padStart(2,"0")}`}
 function renderAll(){renderConcepts();renderMemory();renderObserver();renderBrain();renderCharts()}
-function applyLanguage(){document.documentElement.lang=lang;document.querySelectorAll("[data-i18n]").forEach(el=>el.textContent=tr(el.dataset.i18n));document.querySelectorAll("[data-i18n-placeholder]").forEach(el=>el.placeholder=tr(el.dataset.i18nPlaceholder));$("langRu").classList.toggle("active",lang==="ru");$("langEn").classList.toggle("active",lang==="en");if(!$("result").dataset.touched)$("result").textContent=tr("emptyBrain");$("decayIntervalLabel").textContent=`${brain.decayMeanSec} ${lang==="ru"?"с":"s"}`;renderAll()}
+function applyLanguage(){document.documentElement.lang=lang;document.querySelectorAll("[data-i18n]").forEach(el=>el.textContent=tr(el.dataset.i18n));document.querySelectorAll("[data-i18n-placeholder]").forEach(el=>el.placeholder=tr(el.dataset.i18nPlaceholder));$("langRu").classList.toggle("active",lang==="ru");$("langEn").classList.toggle("active",lang==="en");if(!$("result").dataset.touched)$("result").textContent=tr("emptyBrain");$("decayIntervalLabel").textContent=`${brain.decayMeanSec} ${lang==="ru"?"с":"s"}`;renderAll();drawMathPlot()}
 
 /* ------------------------------- action ---------------------------- */
 async function calculate(){
   if(busy)return;
+
   const source=$("expression").value.trim();
   if(!source)return;
 
@@ -795,8 +2159,8 @@ async function calculate(){
       ast=new Parser(tokenize(source)).parse();
       think(
         L(
-          "Разобрал синтаксис. Теперь иду изнутри выражения наружу.",
-          "Parsed the syntax. Now working from the inside of the expression outward."
+          "Синтаксис разобран. Теперь определяю, что именно от меня хотят: число, формулу, предел, интеграл или функцию.",
+          "Syntax parsed. Now deciding what is being requested: a number, formula, limit, integral, or function."
         ),
         "memory"
       );
@@ -808,43 +2172,51 @@ async function calculate(){
       return;
     }
 
-    const value=await evalNode(ast);
+    const result=await evaluateTop(ast,source);
 
-    if(!value.isFinite()){
-      think(
-        L(
-          "Я дошёл до границы текущей математической модели.",
-          "I reached the boundary of my current mathematical model."
-        ),
-        "bad"
-      );
-      setResult(`<span class="answer" style="color:var(--bad)">${L("не определено","undefined")}</span>`);
-    } else {
-      think(L(`Получилось: ${fmt(value)}.`,`I got: ${fmt(value)}.`),"learn");
-      setResult(
-        `<span class="answer">${escapeHtml(source)} = ${escapeHtml(fmt(value))}</span>`
-      );
-      logObserver(
-        L(`Решено «${source}» → ${fmt(value)}.`,`Solved “${source}” → ${fmt(value)}.`),
-        "memory"
-      );
+    if(result.kind==="number"){
+      const value=result.value;
+
+      if(!value?.isFinite()){
+        think(
+          L(
+            "Я дошёл до границы текущей математической модели.",
+            "I reached the boundary of my current mathematical model."
+          ),
+          "bad"
+        );
+        setResult(`<span class="answer" style="color:var(--bad)">${L("не определено","undefined")}</span>`);
+      }else{
+        think(L(`Получилось: ${fmt(value)}.`,`I got: ${fmt(value)}.`),"learn");
+        const annotation=result.annotation?`<br><small>${escapeHtml(result.annotation)}</small>`:"";
+        setResult(`<span class="answer">${escapeHtml(source)} = ${escapeHtml(fmt(value))}</span>${annotation}`);
+        logObserver(L(`Решено «${source}» → ${fmt(value)}.`,`Solved “${source}” → ${fmt(value)}.`),"memory");
+      }
+    }
+
+    if(result.kind==="symbolic"){
+      think(L("Ответ получился не одним числом, а математической записью.","The result is a mathematical expression rather than a single number."),"learn");
+      setResult(`<span class="answer symbolic-answer">${escapeHtml(result.text)}</span>`);
+      logObserver(L(`Символический результат для «${source}».`,`Symbolic result for “${source}”.`),"memory");
+    }
+
+    if(result.kind==="plot"){
+      setResult(`<span class="answer">${escapeHtml(result.text)}</span>`);
     }
 
     renderAll();
 
-  } catch(err) {
+  }catch(err){
     if(err instanceof ComputationBudgetExceeded){
       showProgress(false);
       saveBrain();
 
-      const partial = activeRun?.lastGood || L(
+      const partial=activeRun?.lastGood||L(
         "успел только разобрать задачу и начать алгоритм",
         "I only managed to parse the task and begin the algorithm"
       );
 
-      const technical = err.detail
-        ? `<br><small>${escapeHtml(err.detail)}</small>`
-        : "";
+      const technical=err.detail?`<br><small>${escapeHtml(err.detail)}</small>`:"";
 
       think(
         L(
@@ -863,14 +2235,13 @@ async function calculate(){
       );
 
       setResult(
-        `<span class="answer" style="color:var(--warn)">${L("Сорян, дальше слишком тяжело.","Sorry, this got too expensive.")}</span><br>` +
+        `<span class="answer" style="color:var(--warn)">${L("Сорян, дальше слишком тяжело.","Sorry, this got too expensive.")}</span><br>`+
         `${L(
           "Я остановил вычисление по защитному лимиту, чтобы сайт не завис и не начал бесконечно жрать ресурсы.",
           "I stopped at the safety budget so the page would not lock up and burn resources indefinitely."
-        )}<br><br>` +
-        `<b>${L("Вот что я успел получить:","Here is what I managed to obtain:")}</b><br>` +
-        `${escapeHtml(partial)}` +
-        technical +
+        )}<br><br>`+
+        `<b>${L("Вот что я успел получить:","Here is what I managed to obtain:")}</b><br>`+
+        `${escapeHtml(partial)}`+technical+
         `<br><br><small>${L(
           "Это промежуточный результат, а не скрытый ответ из обычного калькулятора.",
           "This is an intermediate result, not a hidden answer from a normal calculator."
@@ -886,21 +2257,25 @@ async function calculate(){
       );
 
       renderAll();
-    } else {
+    }else{
       console.error(err);
       showProgress(false);
+      const message=err?.message||String(err);
+
       think(
         L(
-          "Я словил внутреннюю ошибку и остановил текущую мысль, чтобы не уронить страницу.",
-          "I hit an internal error and stopped the current thought instead of crashing the page."
+          `Текущая мысль развалилась: ${message}`,
+          `The current thought fell apart: ${message}`
         ),
         "bad"
       );
+
       setResult(
-        `<span class="answer" style="color:var(--bad)">${L("Внутренняя ошибка.","Internal error.")}</span>`
+        `<span class="answer" style="color:var(--bad)">${L("Не смог закончить эту мысль.","I could not finish this thought.")}</span><br>`+
+        `${escapeHtml(message)}`
       );
     }
-  } finally {
+  }finally{
     activeRun=null;
     busy=false;
     $("calculate").disabled=false;
@@ -909,16 +2284,80 @@ async function calculate(){
 }
 
 /* ------------------------------- events ---------------------------- */
-document.querySelectorAll(".tabs button").forEach(btn=>btn.addEventListener("click",()=>{document.querySelectorAll(".tabs button").forEach(x=>x.classList.remove("active"));document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));btn.classList.add("active");$(btn.dataset.tab).classList.add("active");if(btn.dataset.tab==="charts")renderCharts();if(btn.dataset.tab==="memory")renderMemory()}));
-$("calculate").addEventListener("click",calculate);$("expression").addEventListener("keydown",e=>{if(e.key==="Enter")calculate()});document.querySelectorAll("[data-expr]").forEach(btn=>btn.addEventListener("click",()=>{$("expression").value=btn.dataset.expr;$("expression").focus()}));
-$("memoryConcept").addEventListener("change",e=>{selectedMemoryKey=e.target.value||null;renderMemory()});
-$("langRu").addEventListener("click",()=>{lang="ru";localStorage.setItem(LANG_KEY,lang);applyLanguage()});$("langEn").addEventListener("click",()=>{lang="en";localStorage.setItem(LANG_KEY,lang);applyLanguage()});
-$("decayInterval").value=brain.decayMeanSec;$("decayInterval").addEventListener("input",e=>$("decayIntervalLabel").textContent=`${e.target.value} ${lang==="ru"?"с":"s"}`);$("decayInterval").addEventListener("change",e=>{brain.decayMeanSec=Number(e.target.value);scheduleDecay();saveBrain();renderBrain()});
-$("damageBrain").addEventListener("click",damageMemory);$("resetBrain").addEventListener("click",fullLobotomy);
+document.querySelectorAll(".tabs button").forEach(btn=>btn.addEventListener("click",()=>switchTab(btn.dataset.tab)));
+
+$("calculate").addEventListener("click",calculate);
+$("expression").addEventListener("keydown",e=>{if(e.key==="Enter")calculate()});
+
+document.querySelectorAll("[data-template]").forEach(btn=>btn.addEventListener("click",()=>{
+  const input=$("expression"),text=btn.dataset.template;
+  input.value=text;
+  input.focus();
+  const x=text.indexOf("x");
+  if(x>=0)input.setSelectionRange(x,x+1);
+}));
+
+$("memoryConcept").addEventListener("change",e=>{
+  selectedMemoryKey=e.target.value||null;
+  renderMemory();
+});
+
+function chooseLanguage(next){
+  lang=next;
+  localStorage.setItem(LANG_KEY,lang);
+  $("languageGate").classList.add("hidden");
+  applyLanguage();
+}
+
+$("langRu").addEventListener("click",()=>chooseLanguage("ru"));
+$("langEn").addEventListener("click",()=>chooseLanguage("en"));
+document.querySelectorAll("[data-first-language]").forEach(btn=>btn.addEventListener("click",()=>chooseLanguage(btn.dataset.firstLanguage)));
+
+$("decayInterval").value=brain.decayMeanSec;
+$("decayInterval").addEventListener("input",e=>$("decayIntervalLabel").textContent=`${e.target.value} ${lang==="ru"?"с":"s"}`);
+$("decayInterval").addEventListener("change",e=>{
+  brain.decayMeanSec=Number(e.target.value);
+  scheduleDecay();
+  saveBrain();
+  renderBrain();
+});
+
+$("damageBrain").addEventListener("click",damageMemory);
+$("resetBrain").addEventListener("click",fullLobotomy);
+
+$("plotButton").addEventListener("click",async()=>{
+  const expr=$("plotExpression").value.trim();
+  const a=$("plotMin").value.trim();
+  const b=$("plotMax").value.trim();
+  if(!expr)return;
+
+  $("expression").value=`plot(${expr},x,${a},${b})`;
+  switchTab("calculator");
+  await calculate();
+});
 
 /* -------------------------------- boot ----------------------------- */
-if(!observerLog.length)logObserver(L("Создан новый пустой мозг. Математики внутри нет.","Created a new empty brain. There is no mathematics inside."),"discover");
-recordStats(true);applyLanguage();
-setInterval(()=>{if(Date.now()>=brain.nextDecayAt&&!busy)damageMemory();else renderBrain();recordStats(false)},1000);
+if(!HAD_LANGUAGE)$("languageGate").classList.remove("hidden");
+else $("languageGate").classList.add("hidden");
+
+if(!observerLog.length){
+  logObserver(
+    L(
+      "Создан новый пустой мозг. Математики внутри нет.",
+      "Created a new empty brain. There is no mathematics inside."
+    ),
+    "discover"
+  );
+}
+
+recordStats(true);
+applyLanguage();
+drawMathPlot();
+
+setInterval(()=>{
+  if(Date.now()>=brain.nextDecayAt&&!busy)damageMemory();
+  else renderBrain();
+  recordStats(false);
+},1000);
 
 })();
