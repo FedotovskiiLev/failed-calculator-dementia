@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#0f1115">
+  <meta name="description" content="FAILED Calculator — калькулятор, который учит математику и периодически забывает её.">
+  <title>FAILED Calculator — dementia build</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="shell">
+  <header class="titlebar">
+    <strong>FAILED_CALCULATOR.EXE — dementia build</strong>
+    <div class="window-buttons" aria-hidden="true"><i></i><i></i><i></i></div>
+  </header>
+
+  <section class="hero">
+    <div class="brand">
+      <h1>FAILED <span>CALCULATOR</span></h1>
+      <p>
+        Он не умеет считать. Он обнаруживает операции, старательно строит таблицы,
+        запоминает отдельные странные примеры — а потом в случайный момент забывает вообще всё.
+        Каждый новый сеанс браузера получает собственный пустой мозг.
+      </p>
+    </div>
+    <aside class="brain" aria-label="Состояние мозга">
+      <div class="brain-row"><span>состояние мозга</span><b id="brainState">ПУСТ</b></div>
+      <div class="brain-row"><span>операций известно</span><b id="knownOps">0 / 6</b></div>
+      <div class="brain-row"><span>до провала памяти</span><b id="forgetCountdown">--:--</b></div>
+      <div class="health-track"><div class="health-fill" id="healthFill"></div></div>
+    </aside>
+  </section>
+
+  <nav class="tabs" aria-label="Разделы">
+    <button class="active" data-tab="calculator">КАЛЬКУЛЯТОР</button>
+    <button data-tab="memory">ТАБЛИЦЫ ПАМЯТИ</button>
+    <button data-tab="log">ЖУРНАЛ НАБЛЮДАТЕЛЯ</button>
+    <button data-tab="settings">ДЕМЕНЦИЯ</button>
+    <button data-tab="about">О ПРОЕКТЕ</button>
+  </nav>
+
+  <main>
+    <section id="calculator" class="tab active">
+      <div class="calculator-grid">
+        <article class="card">
+          <h2>ВВЕДИТЕ МАТЕМАТИЧЕСКИЙ ОПЫТ</h2>
+
+          <div class="expression">
+            <input id="a" inputmode="decimal" autocomplete="off" placeholder="например 7">
+            <select id="operator" aria-label="Операция">
+              <option value="+">+</option>
+              <option value="-">−</option>
+              <option value="*">×</option>
+              <option value="/">÷</option>
+              <option value="%">%</option>
+              <option value="**">^</option>
+            </select>
+            <input id="b" inputmode="decimal" autocomplete="off" placeholder="например 8">
+            <button class="primary" id="calculate">ПОПРОБОВАТЬ</button>
+          </div>
+
+          <div class="progress-wrap" id="progressWrap">
+            <div class="progress"><div id="progressBar"></div></div>
+            <div class="progress-label" id="progressLabel">обучение...</div>
+          </div>
+
+          <div class="result" id="result">МОЗГ ПУСТ.
+Введите первый пример.</div>
+        </article>
+
+        <aside class="card">
+          <h2>ИЗВЕСТНЫЕ ОПЕРАЦИИ</h2>
+          <div class="ops-list" id="opsList"></div>
+        </aside>
+      </div>
+    </section>
+
+    <section id="memory" class="tab">
+      <article class="card">
+        <h2>ВНУТРЕННЯЯ ТАБЛИЦА ЗНАНИЙ</h2>
+        <div class="tables-toolbar" id="memoryOps"></div>
+        <p class="table-meta" id="tableMeta"></p>
+        <div class="memory-table-wrap" id="memoryTableWrap"></div>
+        <div class="special-list" id="specialList"></div>
+      </article>
+    </section>
+
+    <section id="log" class="tab">
+      <article class="card">
+        <h2>ЖУРНАЛ ВНЕШНЕГО НАБЛЮДАТЕЛЯ</h2>
+        <p class="table-meta">
+          Журнал находится «снаружи мозга», поэтому переживает приступы деменции.
+        </p>
+        <div class="log" id="eventLog"></div>
+      </article>
+    </section>
+
+    <section id="settings" class="tab">
+      <article class="card">
+        <h2>ПАРАМЕТРЫ КОГНИТИВНОГО РАСПАДА</h2>
+        <div class="settings">
+          <label>
+            Средний интервал до полного провала памяти:
+            <b id="intervalLabel"></b>
+            <br>
+            <small>Фактический момент каждый раз выбирается случайно около этого значения.</small>
+            <input id="interval" type="range" min="30" max="600" step="15">
+          </label>
+          <button class="danger" id="resetBrain">СТЕРЕТЬ МОЗГ СЕЙЧАС</button>
+        </div>
+      </article>
+    </section>
+
+    <section id="about" class="tab">
+      <article class="card about">
+        <h2>ЧТО ЗДЕСЬ ПРОИСХОДИТ</h2>
+        <p>
+          Это полностью статический сайт. Никакого сервера и общей базы данных:
+          состояние мозга живёт в <code>sessionStorage</code>. Поэтому новый сеанс браузера
+          начинает с калькулятора, который ничего не знает; обычное обновление страницы
+          текущий мозг не убивает.
+        </p>
+        <p>
+          Впервые встретив операцию, калькулятор относится к ней как к открытию.
+          Для небольших целых чисел он буквально заполняет таблицу результатов по ячейкам.
+          Слишком большие и дробные примеры он запоминает как отдельные эпизоды.
+        </p>
+        <p>
+          Через случайный промежуток времени наступает полный провал памяти:
+          таблицы и открытия исчезают, после чего те же операции снова вызывают удивление.
+          Внешний журнал сохраняется до закрытия вкладки, чтобы можно было наблюдать
+          циклы обучения и забывания.
+        </p>
+      </article>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <span>FAILED Calculator / dementia build</span>
+    <span>static HTML + CSS + JS · GitHub Pages friendly</span>
+  </footer>
+</div>
+
+<div class="toast" id="toast" role="status"></div>
+
+<script src="app.js"></script>
+</body>
+</html>
