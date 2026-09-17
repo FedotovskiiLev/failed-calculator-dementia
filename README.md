@@ -167,6 +167,16 @@ node --check app.js
 5. **No hidden instant-calculator path.** The evaluator should prefer learned tables, derivations, and explicit numerical methods.
 6. **The joke should remain technically interesting.** The absurdity works better when the underlying system is real.
 
+## Computation safety
+
+FAILED Calculator is intentionally inefficient, but it should not be allowed to freeze the page indefinitely.
+
+Every expression runs inside a cooperative work budget. Expensive step-by-step algorithms keep checkpoints of their latest meaningful intermediate state. If an operation would require an unreasonable amount of tight-loop work, the calculator stops the current thought, preserves everything it learned up to that point, and reports the latest approximation or partial result.
+
+For example, deriving `e` through reciprocal factorials may eventually make the intentionally primitive multiplication algorithm too expensive. In that case the UI reports the best partial approximation reached instead of silently switching to `Math.E` or locking the browser tab.
+
+The safety budget is **not** a fallback calculator. It never replaces unfinished work with a hidden native answer.
+
 ## Known limitations
 
 - The model is an educational/artistic simulation of mathematical learning, not a computer algebra system.

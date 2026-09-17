@@ -2,7 +2,7 @@
 "use strict";
 
 /* ============================================================
-   FAILED CALCULATOR 1.0
+   FAILED CALCULATOR 1.0.1
 
    The expression evaluator deliberately does not dispatch an
    expression straight to JavaScript arithmetic or eval().
@@ -30,6 +30,78 @@ const $ = id => document.getElementById(id);
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 const clamp = (n,a,b) => n<a?a:n>b?b:n;
 const absN = n => n < 0 ? -n : n;
+
+/* ---------------------- computation safety ----------------------
+   Deliberate thinking delays are allowed to take time because they
+   yield to the browser. What we do not allow is an enormous tight
+   arithmetic loop that locks the tab and burns a CPU core forever.
+
+   The work budget is intentionally conservative. When it is exhausted,
+   the calculator keeps everything it learned so far, reports its last
+   meaningful intermediate result, and stops the current expression.
+   ---------------------------------------------------------------- */
+const RUN_STEP_LIMIT = 160000;
+const SINGLE_LINEAR_LIMIT = 60000;
+const EMERGENCY_WALL_MS = 60000;
+
+class ComputationBudgetExceeded extends Error {
+  constructor(detail="") {
+    super("computation budget exceeded");
+    this.name = "ComputationBudgetExceeded";
+    this.detail = detail;
+  }
+}
+
+let activeRun = null;
+
+function beginRun(source) {
+  activeRun = {
+    source,
+    startedAt: performance.now(),
+    steps: 0,
+    lastGood: "",
+    technical: ""
+  };
+}
+
+function setRunProgress(ru, en) {
+  if (!activeRun) return;
+  activeRun.lastGood = L(ru, en);
+}
+
+function budgetTick(units=1, technical="") {
+  if (!activeRun) return;
+
+  activeRun.steps += units;
+  if (technical) activeRun.technical = technical;
+
+  if (
+    activeRun.steps > RUN_STEP_LIMIT ||
+    performance.now() - activeRun.startedAt > EMERGENCY_WALL_MS
+  ) {
+    throw new ComputationBudgetExceeded(
+      technical || activeRun.technical
+    );
+  }
+}
+
+function budgetPreflight(projectedSteps, technical="") {
+  if (!activeRun) return;
+
+  if (
+    projectedSteps > SINGLE_LINEAR_LIMIT ||
+    activeRun.steps + projectedSteps > RUN_STEP_LIMIT
+  ) {
+    activeRun.technical = technical;
+    throw new ComputationBudgetExceeded(technical);
+  }
+}
+
+function budgetChunk(i, total, chunk=256, technical="") {
+  if ((i % chunk) === 0) {
+    budgetTick(Math.min(chunk, total - i), technical);
+  }
+}
 
 const I18N = {
   ru: {
@@ -253,28 +325,161 @@ async function ensureConcept(id){
 /* -------------------- arithmetic without shortcuts ---------------- */
 function succ(n){return n+1}
 function pred(n){return n-1}
-function addIntCore(a,b){let r=a,steps=absN(b);for(let i=0;i<steps;i++)r=b>=0?succ(r):pred(r);return r}
-function subIntCore(a,b){return addIntCore(a,-b)}
-function mulIntCore(a,b){
-  const neg=(a<0)!==(b<0),aa=absN(a),bb=absN(b);let r=0;
-  for(let i=0;i<bb;i++)r=addIntCore(r,aa);return neg?-r:r;
+
+function addIntCore(a,b){
+  let r=a,steps=absN(b);
+  budgetPreflight(
+    steps,
+    L(
+      `для сложения ${a} + ${b} требуется примерно ${steps} последовательных шагов`,
+      `adding ${a} + ${b} needs roughly ${steps} successor/predecessor steps`
+    )
+  );
+
+  for(let i=0;i<steps;i++){
+    budgetChunk(
+      i,
+      steps,
+      256,
+      L(
+        `иду по целым числам: выполнено ${i} из ${steps} шагов`,
+        `walking through integers: ${i} of ${steps} steps`
+      )
+    );
+    r=b>=0?succ(r):pred(r);
+  }
+  return r;
 }
+
+function subIntCore(a,b){
+  return addIntCore(a,-b);
+}
+
+function mulIntCore(a,b){
+  const neg=(a<0)!==(b<0),aa=absN(a),bb=absN(b);
+  let r=0;
+
+  budgetPreflight(
+    bb,
+    L(
+      `умножение ${a} × ${b} требует ${bb} повторений сложения`,
+      `multiplication ${a} × ${b} needs ${bb} repeated additions`
+    )
+  );
+
+  for(let i=0;i<bb;i++){
+    budgetTick(
+      1,
+      L(
+        `повторное сложение: ${i} из ${bb}`,
+        `repeated addition: ${i} of ${bb}`
+      )
+    );
+    r=addIntCore(r,aa);
+  }
+  return neg?-r:r;
+}
+
 function divIntCore(a,b,precision=10){
   if(b===0)return NaN;
-  const neg=(a<0)!==(b<0),aa=absN(a),bb=absN(b);let rem=aa,whole=0;
-  while(rem>=bb){rem=subIntCore(rem,bb);whole=succ(whole)}
+
+  const neg=(a<0)!==(b<0),aa=absN(a),bb=absN(b);
+  let rem=aa,whole=0,wholeSteps=0;
+
+  const roughWhole = bb===0 ? 0 : Math.floor(aa/bb);
+  budgetPreflight(
+    roughWhole,
+    L(
+      `целая часть деления потребует около ${roughWhole} повторных вычитаний`,
+      `the integer part of the division needs about ${roughWhole} repeated subtractions`
+    )
+  );
+
+  while(rem>=bb){
+    if((wholeSteps%128)===0){
+      budgetTick(
+        Math.min(128,Math.max(1,roughWhole-wholeSteps)),
+        L(
+          `длинное деление: найдено ${wholeSteps} целых шагов`,
+          `long division: ${wholeSteps} whole steps found`
+        )
+      );
+    }
+    rem=subIntCore(rem,bb);
+    whole=succ(whole);
+    wholeSteps++;
+  }
+
   let digits="";
   for(let p=0;p<precision && rem!==0;p++){
-    rem=mulIntCore(rem,10);let d=0;while(rem>=bb){rem=subIntCore(rem,bb);d=succ(d)}digits+=String(d);
+    budgetTick(8,L("уточняю дробную часть деления","refining the fractional part"));
+    rem=mulIntCore(rem,10);
+    let d=0;
+    while(rem>=bb){
+      budgetTick(1,L("подбираю очередную цифру частного","finding the next quotient digit"));
+      rem=subIntCore(rem,bb);
+      d=succ(d);
+    }
+    digits+=String(d);
   }
-  const text=(neg?"-":"")+String(whole)+(digits?"."+digits:"");return Number(text);
+
+  const text=(neg?"-":"")+String(whole)+(digits?"."+digits:"");
+  return Number(text);
 }
+
 function modIntCore(a,b){
-  if(b===0)return NaN;const neg=a<0;let rem=absN(a),bb=absN(b);while(rem>=bb)rem=subIntCore(rem,bb);return neg?-rem:rem;
+  if(b===0)return NaN;
+
+  const neg=a<0;
+  let rem=absN(a),bb=absN(b),steps=0;
+  const rough=bb===0?0:Math.floor(rem/bb);
+
+  budgetPreflight(
+    rough,
+    L(
+      `поиск остатка потребует около ${rough} вычитаний`,
+      `finding the remainder needs about ${rough} subtractions`
+    )
+  );
+
+  while(rem>=bb){
+    if((steps%128)===0){
+      budgetTick(
+        Math.min(128,Math.max(1,rough-steps)),
+        L("последовательно вычитаю делитель","repeatedly subtracting the divisor")
+      );
+    }
+    rem=subIntCore(rem,bb);
+    steps++;
+  }
+  return neg?-rem:rem;
 }
+
 function powIntCore(a,b){
-  if(!Number.isSafeInteger(b))return NaN;if(b===0)return 1;let r=1;
-  for(let i=0;i<absN(b);i++)r=mulIntCore(r,a);return b<0?divIntCore(1,r,12):r;
+  if(!Number.isSafeInteger(b))return NaN;
+  if(b===0)return 1;
+
+  const n=absN(b);
+  budgetPreflight(
+    n,
+    L(
+      `степень ${a}^${b} требует ${n} последовательных умножений`,
+      `${a}^${b} needs ${n} sequential multiplications`
+    )
+  );
+
+  let r=1;
+  for(let i=0;i<n;i++){
+    budgetTick(
+      1,
+      L(
+        `возведение в степень: умножение ${i+1} из ${n}`,
+        `power: multiplication ${i+1} of ${n}`
+      )
+    );
+    r=mulIntCore(r,a);
+  }
+  return b<0?divIntCore(1,r,12):r;
 }
 
 /* For non-integers the browser's Number type is the physical substrate.
@@ -312,6 +517,7 @@ async function buildTable(c,id,min,max){
   if(!c.table)c.table={min,max,cells:{}};c.table.min=Math.min(c.table.min,min);c.table.max=Math.max(c.table.max,max);min=c.table.min;max=c.table.max;
   const total=(max-min+1)**2;let done=0;
   think(L(`Строю таблицу «${META[id].ru}» для ${min}…${max}.`,`Building the “${META[id].en}” table for ${min}…${max}.`),"learn");
+  setRunProgress(`таблица «${META[id].ru}»: начал диапазон ${min}…${max}`,`“${META[id].en}” table: started range ${min}…${max}`);
   showProgress(true,0,L("собираю знания по ячейкам","building knowledge cell by cell"));
   for(let a=min;a<=max;a++){
     for(let b=min;b<=max;b++){
@@ -320,6 +526,7 @@ async function buildTable(c,id,min,max){
       done++;
     }
     showProgress(true,done/total*100,L(`строка ${a}: ${done} / ${total} ячеек`,`row ${a}: ${done} / ${total} cells`));
+    setRunProgress(`таблица «${META[id].ru}»: готово ${done} из ${total} ячеек`,`“${META[id].en}” table: ${done} of ${total} cells built`);
     saveBrain();if(selectedMemoryKey===id)renderMemory();await sleep((max-min)>20?18:55);
   }
   showProgress(false);think(L(`Таблица готова: ${Object.keys(c.table.cells).length} явных ячеек.`,`Table complete: ${Object.keys(c.table.cells).length} explicit cells.`),"learn");
@@ -350,7 +557,20 @@ async function applyBinary(id,a,b){
   let value;
   if(id==="pow"){
     if(!b.isReal()||!Number.isSafeInteger(b.re)){think(L("Дробные и комплексные степени пока за границей моей модели.","Fractional and complex exponents are outside my current model."),"bad");return new Complex(NaN,NaN)}
-    let r=new Complex(1,0),n=absN(b.re);for(let i=0;i<n;i++){r=complexCore("mul",r,a);if(i<6||i===n-1){think(L(`умножение ${i+1} из ${n}`,`multiplication ${i+1} of ${n}`),"research");await sleep(120)}}
+    let r=new Complex(1,0),n=absN(b.re);
+    budgetPreflight(n,L(`степень требует ${n} умножений`,`the power requires ${n} multiplications`));
+    for(let i=0;i<n;i++){
+      budgetTick(1,L(`степень: ${i} из ${n} умножений`,`power: ${i} of ${n} multiplications`));
+      r=complexCore("mul",r,a);
+      setRunProgress(
+        `после ${i+1} умножений промежуточно получено ${fmt(r)}`,
+        `after ${i+1} multiplications the intermediate value is ${fmt(r)}`
+      );
+      if(i<6||i===n-1){
+        think(L(`умножение ${i+1} из ${n}`,`multiplication ${i+1} of ${n}`),"research");
+        await sleep(120);
+      }
+    }
     value=b.re<0?complexCore("div",new Complex(1,0),r):r;
   } else if(id==="mod"){
     if(!a.isReal()||!b.isReal())return new Complex(NaN,NaN);value=new Complex(realCore("mod",a.re,b.re),0);
@@ -364,44 +584,74 @@ async function applyBinary(id,a,b){
 async function derivePi(){
   const c=await ensureConcept("pi");if(c.constant!=null)return c.constant;
   let p=3,sign=1;
+  setRunProgress("π ≈ 3 — старт ряда Нилаканты","π ≈ 3 — start of the Nilakantha series");
   think(L("Использую ряд Нилаканты: 3 + 4/(2·3·4) − 4/(4·5·6) + ...","Using the Nilakantha series: 3 + 4/(2·3·4) − 4/(4·5·6) + ..."),"research");
   for(let n=2,step=1;step<=28;n+=2,step++){
+    budgetTick(30,L(`ряд π: итерация ${step}`,`π series: iteration ${step}`));
     const den=machineMul(machineMul(n,n+1),n+2),term=machineDiv(4,den);p=sign>0?machineAdd(p,term):machineSub(p,term);sign=-sign;
+    setRunProgress(`π ≈ ${clean(p)} после ${step} итераций`,`π ≈ ${clean(p)} after ${step} iterations`);
     if(step<=6||step%5===0||step===28){think(L(`итерация ${step}: π ≈ ${clean(p)}`,`iteration ${step}: π ≈ ${clean(p)}`),"research");await sleep(120)}
   }
   c.constant=p;saveBrain();logObserver(L(`Самостоятельно получено приближение π ≈ ${clean(p)}.`,`Independently derived π ≈ ${clean(p)}.`),"learn");return p;
 }
 async function deriveE(){
   const c=await ensureConcept("e");if(c.constant!=null)return c.constant;
-  await ensureConcept("fact");await ensureDependencies("fact");let sum=1,fact=1;
-  for(let n=1;n<=14;n++){fact=mulIntCore(fact,n);sum=machineAdd(sum,machineDiv(1,fact));if(n<=6||n===10||n===14){think(L(`член 1/${n}! → e ≈ ${clean(sum)}`,`term 1/${n}! → e ≈ ${clean(sum)}`),"research");await sleep(140)}}
+  await ensureConcept("fact");await ensureDependencies("fact");
+  let sum=1,fact=1;
+  setRunProgress("e ≈ 1 — ещё до первого члена ряда","e ≈ 1 — before the first series term");
+
+  for(let n=1;n<=14;n++){
+    budgetTick(15,L(`ряд e: готовлю ${n}!`,`e series: preparing ${n}!`));
+    fact=mulIntCore(fact,n);
+    sum=machineAdd(sum,machineDiv(1,fact));
+    setRunProgress(
+      `e ≈ ${clean(sum)} после члена 1/${n}!`,
+      `e ≈ ${clean(sum)} after the term 1/${n}!`
+    );
+    if(n<=6||n===10||n===14){
+      think(L(`член 1/${n}! → e ≈ ${clean(sum)}`,`term 1/${n}! → e ≈ ${clean(sum)}`),"research");
+      await sleep(140);
+    }
+  }
+
   c.constant=sum;saveBrain();return sum;
 }
 async function deriveSqrtReal(x){
   if(x<0)return NaN;if(x===0)return 0;let g=x>=1?machineDiv(x,2):1;
-  for(let i=1;i<=12;i++){g=machineDiv(machineAdd(g,machineDiv(x,g)),2);if(i<=5||i===8||i===12){think(L(`Ньютон, шаг ${i}: ${clean(g)}`,`Newton step ${i}: ${clean(g)}`),"research");await sleep(110)}}return g;
+  setRunProgress(`sqrt(${x}) ≈ ${clean(g)} — начальная догадка`,`sqrt(${x}) ≈ ${clean(g)} — initial guess`);
+  for(let i=1;i<=12;i++){
+    budgetTick(20,L(`метод Ньютона: шаг ${i}`,`Newton method: step ${i}`));
+    g=machineDiv(machineAdd(g,machineDiv(x,g)),2);
+    setRunProgress(`sqrt(${x}) ≈ ${clean(g)} после ${i} шагов Ньютона`,`sqrt(${x}) ≈ ${clean(g)} after ${i} Newton steps`);
+    if(i<=5||i===8||i===12){think(L(`Ньютон, шаг ${i}: ${clean(g)}`,`Newton step ${i}: ${clean(g)}`),"research");await sleep(110)}
+  }
+  return g;
 }
 async function taylorExp(z){
   let sum=new Complex(1,0),term=new Complex(1,0);
-  for(let n=1;n<=20;n++){term=complexCore("mul",term,z);term=complexCore("div",term,new Complex(n,0));sum=complexCore("add",sum,term);if(n<=5||n%5===0){think(L(`ряд exp: член ${n}, сумма ≈ ${fmt(sum)}`,`exp series: term ${n}, sum ≈ ${fmt(sum)}`),"research");await sleep(100)}}return sum;
+  for(let n=1;n<=20;n++){budgetTick(40,L(`ряд exp: член ${n}`,`exp series: term ${n}`));term=complexCore("mul",term,z);term=complexCore("div",term,new Complex(n,0));sum=complexCore("add",sum,term);setRunProgress(`exp(${fmt(z)}) ≈ ${fmt(sum)} после ${n} членов`,`exp(${fmt(z)}) ≈ ${fmt(sum)} after ${n} terms`);if(n<=5||n%5===0){think(L(`ряд exp: член ${n}, сумма ≈ ${fmt(sum)}`,`exp series: term ${n}, sum ≈ ${fmt(sum)}`),"research");await sleep(100)}}return sum;
 }
 async function taylorSin(z){
   let sum=new Complex(0,0),term=z,zz=complexCore("mul",z,z);sum=complexCore("add",sum,term);
   for(let n=1;n<=10;n++){
+    budgetTick(50,L(`ряд sin: член ${n+1}`,`sin series: term ${n+1}`));
     term=complexCore("mul",term,zz);term=complexCore("div",term,new Complex((2*n)*(2*n+1),0));term=new Complex(-term.re,-term.im);sum=complexCore("add",sum,term);
+    setRunProgress(`sin(${fmt(z)}) ≈ ${fmt(sum)} после ${n+1} членов`,`sin(${fmt(z)}) ≈ ${fmt(sum)} after ${n+1} terms`);
     think(L(`sin: член ${n+1}, сумма ≈ ${fmt(sum)}`,`sin: term ${n+1}, sum ≈ ${fmt(sum)}`),"research");await sleep(115);
   }return sum;
 }
 async function taylorCos(z){
   let sum=new Complex(1,0),term=new Complex(1,0),zz=complexCore("mul",z,z);
   for(let n=1;n<=10;n++){
+    budgetTick(50,L(`ряд cos: член ${n+1}`,`cos series: term ${n+1}`));
     term=complexCore("mul",term,zz);term=complexCore("div",term,new Complex((2*n-1)*(2*n),0));term=new Complex(-term.re,-term.im);sum=complexCore("add",sum,term);
+    setRunProgress(`cos(${fmt(z)}) ≈ ${fmt(sum)} после ${n+1} членов`,`cos(${fmt(z)}) ≈ ${fmt(sum)} after ${n+1} terms`);
     think(L(`cos: член ${n+1}, сумма ≈ ${fmt(sum)}`,`cos: term ${n+1}, sum ≈ ${fmt(sum)}`),"research");await sleep(115);
   }return sum;
 }
 async function deriveLnPositive(x){
   if(!(x>0))return NaN;const y=machineDiv(machineSub(x,1),machineAdd(x,1)),y2=machineMul(y,y);let term=y,sum=0;
-  for(let n=0;n<34;n++){const denom=2*n+1;sum=machineAdd(sum,machineDiv(term,denom));term=machineMul(term,y2);if(n<5||n%6===0||n===33){think(L(`ln: член ${n+1}, приближение ≈ ${clean(machineMul(2,sum))}`,`ln: term ${n+1}, approximation ≈ ${clean(machineMul(2,sum))}`),"research");await sleep(85)}}return machineMul(2,sum);
+  for(let n=0;n<34;n++){budgetTick(30,L(`ряд ln: член ${n+1}`,`ln series: term ${n+1}`));const denom=2*n+1;sum=machineAdd(sum,machineDiv(term,denom));term=machineMul(term,y2);setRunProgress(`ln(${x}) ≈ ${clean(machineMul(2,sum))} после ${n+1} членов`,`ln(${x}) ≈ ${clean(machineMul(2,sum))} after ${n+1} terms`);if(n<5||n%6===0||n===33){think(L(`ln: член ${n+1}, приближение ≈ ${clean(machineMul(2,sum))}`,`ln: term ${n+1}, approximation ≈ ${clean(machineMul(2,sum))}`),"research");await sleep(85)}}return machineMul(2,sum);
 }
 async function applyFunction(id,z){
   const c=await ensureConcept(id);remember(c);const k=hashZ(z);
@@ -433,7 +683,14 @@ async function applyFactorial(z){
   const c=await ensureConcept("fact");await ensureDependencies("fact");remember(c);const k=hashZ(z);
   if(c.episodes[k]&&c.episodes[k].strength>0)return de(c.episodes[k].value);
   if(!z.isReal()||!Number.isSafeInteger(z.re)||z.re<0||z.re>170){think(L("Такой факториал пока не умею строить.","I cannot construct that factorial yet."),"bad");return new Complex(NaN,NaN)}
-  let r=1;for(let n=2;n<=z.re;n++){r=mulIntCore(r,n);if(n<=7||n===z.re){think(L(`перемножаю до ${n}: ${r}`,`multiplying through ${n}: ${r}`),"research");await sleep(120)}}
+  let r=1;
+  setRunProgress(`${fmt(z)}!: пока дошёл только до 1`,` ${fmt(z)}!: currently only reached 1`);
+  for(let n=2;n<=z.re;n++){
+    budgetTick(10,L(`факториал: множитель ${n}`,`factorial: multiplier ${n}`));
+    r=mulIntCore(r,n);
+    setRunProgress(`${fmt(z)}!: произведение до ${n} = ${r}`,`${fmt(z)}!: product through ${n} = ${r}`);
+    if(n<=7||n===z.re){think(L(`перемножаю до ${n}: ${r}`,`multiplying through ${n}: ${r}`),"research");await sleep(120)}
+  }
   const v=new Complex(r,0);c.episodes[k]={expression:`${fmt(z)}!`,value:ser(v),strength:100,createdAt:Date.now()};saveBrain();return v;
 }
 
@@ -519,15 +776,136 @@ function applyLanguage(){document.documentElement.lang=lang;document.querySelect
 
 /* ------------------------------- action ---------------------------- */
 async function calculate(){
-  if(busy)return;const source=$("expression").value.trim();if(!source)return;busy=true;$("calculate").disabled=true;clearThinking();showProgress(false);setResult(L("ДУМАЮ...","THINKING..."));
+  if(busy)return;
+  const source=$("expression").value.trim();
+  if(!source)return;
+
+  busy=true;
+  $("calculate").disabled=true;
+  clearThinking();
+  showProgress(false);
+  setResult(L("ДУМАЮ...","THINKING..."));
+  beginRun(source);
+
   try{
-    think(L(`Получено выражение: ${source}`,`Received expression: ${source}`),"memory");let ast;
-    try{ast=new Parser(tokenize(source)).parse();think(L("Разобрал синтаксис. Теперь иду изнутри выражения наружу.","Parsed the syntax. Now working from the inside of the expression outward."),"memory")}catch(err){think(err.message,"bad");setResult(`<span class="answer" style="color:var(--bad)">${L("Не понял запись.","Could not parse it.")}</span><br>${escapeHtml(err.message)}`);return}
+    think(L(`Получено выражение: ${source}`,`Received expression: ${source}`),"memory");
+
+    let ast;
+    try{
+      ast=new Parser(tokenize(source)).parse();
+      think(
+        L(
+          "Разобрал синтаксис. Теперь иду изнутри выражения наружу.",
+          "Parsed the syntax. Now working from the inside of the expression outward."
+        ),
+        "memory"
+      );
+    }catch(err){
+      think(err.message,"bad");
+      setResult(
+        `<span class="answer" style="color:var(--bad)">${L("Не понял запись.","Could not parse it.")}</span><br>${escapeHtml(err.message)}`
+      );
+      return;
+    }
+
     const value=await evalNode(ast);
-    if(!value.isFinite()){think(L("Я дошёл до границы текущей математической модели.","I reached the boundary of my current mathematical model."),"bad");setResult(`<span class="answer" style="color:var(--bad)">${L("не определено","undefined")}</span>`)}
-    else{think(L(`Получилось: ${fmt(value)}.`, `I got: ${fmt(value)}.`),"learn");setResult(`<span class="answer">${escapeHtml(source)} = ${escapeHtml(fmt(value))}</span>`);logObserver(L(`Решено «${source}» → ${fmt(value)}.`,`Solved “${source}” → ${fmt(value)}.`),"memory")}
+
+    if(!value.isFinite()){
+      think(
+        L(
+          "Я дошёл до границы текущей математической модели.",
+          "I reached the boundary of my current mathematical model."
+        ),
+        "bad"
+      );
+      setResult(`<span class="answer" style="color:var(--bad)">${L("не определено","undefined")}</span>`);
+    } else {
+      think(L(`Получилось: ${fmt(value)}.`,`I got: ${fmt(value)}.`),"learn");
+      setResult(
+        `<span class="answer">${escapeHtml(source)} = ${escapeHtml(fmt(value))}</span>`
+      );
+      logObserver(
+        L(`Решено «${source}» → ${fmt(value)}.`,`Solved “${source}” → ${fmt(value)}.`),
+        "memory"
+      );
+    }
+
     renderAll();
-  } finally{busy=false;$("calculate").disabled=false;recordStats(true)}
+
+  } catch(err) {
+    if(err instanceof ComputationBudgetExceeded){
+      showProgress(false);
+      saveBrain();
+
+      const partial = activeRun?.lastGood || L(
+        "успел только разобрать задачу и начать алгоритм",
+        "I only managed to parse the task and begin the algorithm"
+      );
+
+      const technical = err.detail
+        ? `<br><small>${escapeHtml(err.detail)}</small>`
+        : "";
+
+      think(
+        L(
+          "Сорян, я начал зависать. Останавливаюсь раньше, чем положу вкладку.",
+          "Sorry, I started getting stuck. I am stopping before I freeze the tab."
+        ),
+        "bad"
+      );
+
+      think(
+        L(
+          `Последнее устойчивое состояние: ${partial}`,
+          `Last stable state: ${partial}`
+        ),
+        "confuse"
+      );
+
+      setResult(
+        `<span class="answer" style="color:var(--warn)">${L("Сорян, дальше слишком тяжело.","Sorry, this got too expensive.")}</span><br>` +
+        `${L(
+          "Я остановил вычисление по защитному лимиту, чтобы сайт не завис и не начал бесконечно жрать ресурсы.",
+          "I stopped at the safety budget so the page would not lock up and burn resources indefinitely."
+        )}<br><br>` +
+        `<b>${L("Вот что я успел получить:","Here is what I managed to obtain:")}</b><br>` +
+        `${escapeHtml(partial)}` +
+        technical +
+        `<br><br><small>${L(
+          "Это промежуточный результат, а не скрытый ответ из обычного калькулятора.",
+          "This is an intermediate result, not a hidden answer from a normal calculator."
+        )}</small>`
+      );
+
+      logObserver(
+        L(
+          `Вычисление «${source}» остановлено защитным лимитом. Последний прогресс: ${partial}.`,
+          `Computation “${source}” stopped by the safety budget. Last progress: ${partial}.`
+        ),
+        "decay"
+      );
+
+      renderAll();
+    } else {
+      console.error(err);
+      showProgress(false);
+      think(
+        L(
+          "Я словил внутреннюю ошибку и остановил текущую мысль, чтобы не уронить страницу.",
+          "I hit an internal error and stopped the current thought instead of crashing the page."
+        ),
+        "bad"
+      );
+      setResult(
+        `<span class="answer" style="color:var(--bad)">${L("Внутренняя ошибка.","Internal error.")}</span>`
+      );
+    }
+  } finally {
+    activeRun=null;
+    busy=false;
+    $("calculate").disabled=false;
+    recordStats(true);
+  }
 }
 
 /* ------------------------------- events ---------------------------- */
