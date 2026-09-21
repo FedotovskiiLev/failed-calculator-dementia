@@ -2,7 +2,7 @@
 "use strict";
 
 /* ============================================================
-   FAILED CALCULATOR 1.1.0
+   FAILED CALCULATOR 1.1.1
 
    The expression evaluator deliberately does not dispatch an
    expression straight to JavaScript arithmetic or eval().
@@ -103,6 +103,23 @@ function budgetChunk(i, total, chunk=256, technical="") {
   }
 }
 
+function localBudgetCheckpoint() {
+  if (!activeRun) return null;
+  return {
+    steps: activeRun.steps,
+    technical: activeRun.technical
+  };
+}
+
+function restoreLocalBudget(checkpoint, penalty=250) {
+  if (!activeRun || !checkpoint) return;
+  activeRun.steps = Math.min(
+    checkpoint.steps + penalty,
+    RUN_STEP_LIMIT - 1000
+  );
+  activeRun.technical = checkpoint.technical || "";
+}
+
 const I18N = {
   ru: {
     kicker:"НЕЙРОДЕГЕНЕРАТИВНАЯ МАТЕМАТИЧЕСКАЯ СИСТЕМА",
@@ -123,7 +140,7 @@ const I18N = {
     plotExpressionPlaceholder:"например: sin(x) + x/4", plotFrom:"от x =", plotTo:"до x =", plotButton:"ПОСТРОИТЬ", plotEmpty:"График ещё не построен.",
     chartsTitle:"ГРАФИКИ КОГНИТИВНОЙ ЖИЗНИ", chartsSubtitle:"Данные записывает внешний наблюдатель, поэтому история переживает приступы забывания.",
     chartHealth:"Целостность памяти", chartKnowledge:"Количество сохранённых знаний", chartConcepts:"Число известных понятий", chartDecay:"Накопленные приступы деменции",
-    observerTitle:"ЖУРНАЛ ВНЕШНЕГО НАБЛЮДАТЕЛЯ", observerSubtitle:"Журнал находится «снаружи мозга» и переживает его забывание.",
+    observerTitle:"ЖУРНАЛ ВНЕШНЕГО НАБЛЮДАТЕЛЯ", observerSubtitle:"Журнал находится «снаружи мозга» и переживает забывание.",
     dementiaTitle:"ПАРАМЕТРЫ КОГНИТИВНОГО РАСПАДА", decayInterval:"Средний интервал между приступами:", decayHelp:"Приступ повреждает случайные понятия, ослабляет воспоминания и вырывает отдельные ячейки таблиц.", triggerEpisode:"ВЫЗВАТЬ ПРИСТУП", lobotomy:"ПОЛНАЯ ЛОБОТОМИЯ", currentStage:"Текущая стадия:",
     aboutTitle:"КАК ЭТО РАБОТАЕТ",
     aboutP1:"Это не обычный калькулятор с театральной задержкой. Он хранит приобретённые таблицы, численные методы и правила математического анализа в памяти сеанса и старается выводить новое из уже открытого.",
@@ -829,9 +846,30 @@ async function deriveE(){
   setRunProgress("e ≈ 1 — ещё до первого члена ряда","e ≈ 1 — before the first series term");
 
   for(let n=1;n<=14;n++){
-    budgetTick(15,L(`ряд e: готовлю ${n}!`,`e series: preparing ${n}!`));
-    fact=mulIntCore(fact,n);
-    sum=machineAdd(sum,machineDiv(1,fact));
+    const checkpoint=localBudgetCheckpoint();
+    try{
+      budgetTick(15,L(`ряд e: готовлю ${n}!`,`e series: preparing ${n}!`));
+      const nextFact=mulIntCore(fact,n);
+      const nextSum=machineAdd(sum,machineDiv(1,nextFact));
+      fact=nextFact;
+      sum=nextSum;
+    }catch(err){
+      if(!(err instanceof ComputationBudgetExceeded))throw err;
+      restoreLocalBudget(checkpoint);
+      think(
+        L(
+          `Следующий факториал слишком дорогой. Останавливаю ряд здесь и продолжаю с e ≈ ${clean(sum)}.`,
+          `The next factorial is too expensive. Stopping the series here and continuing with e ≈ ${clean(sum)}.`
+        ),
+        "confuse"
+      );
+      setRunProgress(
+        `e ≈ ${clean(sum)} — ряд остановлен на последнем безопасном члене`,
+        `e ≈ ${clean(sum)} — series stopped at the last safe term`
+      );
+      break;
+    }
+
     setRunProgress(
       `e ≈ ${clean(sum)} после члена 1/${n}!`,
       `e ≈ ${clean(sum)} after the term 1/${n}!`
@@ -878,8 +916,69 @@ async function taylorCos(z){
   }return sum;
 }
 async function deriveLnPositive(x){
-  if(!(x>0))return NaN;const y=machineDiv(machineSub(x,1),machineAdd(x,1)),y2=machineMul(y,y);let term=y,sum=0;
-  for(let n=0;n<34;n++){budgetTick(30,L(`ряд ln: член ${n+1}`,`ln series: term ${n+1}`));const denom=2*n+1;sum=machineAdd(sum,machineDiv(term,denom));term=machineMul(term,y2);setRunProgress(`ln(${x}) ≈ ${clean(machineMul(2,sum))} после ${n+1} членов`,`ln(${x}) ≈ ${clean(machineMul(2,sum))} after ${n+1} terms`);if(n<5||n%6===0||n===33){think(L(`ln: член ${n+1}, приближение ≈ ${clean(machineMul(2,sum))}`,`ln: term ${n+1}, approximation ≈ ${clean(machineMul(2,sum))}`),"research");await sleep(85)}}return machineMul(2,sum);
+  if(!(x>0))return NaN;
+
+  const original=x;
+  let shifts=0;
+
+  while(x>1.5){
+    budgetTick(4,L("привожу аргумент ln делением на 2","reducing ln argument by dividing by 2"));
+    x=machineDiv(x,2);
+    shifts++;
+  }
+  while(x<0.75){
+    budgetTick(4,L("привожу аргумент ln умножением на 2","reducing ln argument by multiplying by 2"));
+    x=machineMul(x,2);
+    shifts--;
+  }
+
+  if(shifts!==0){
+    think(
+      L(
+        `Сначала привожу ${clean(original)} к ${clean(x)} с помощью степени двойки.`,
+        `First reducing ${clean(original)} to ${clean(x)} using a power of two.`
+      ),
+      "research"
+    );
+    await sleep(180);
+  }
+
+  const series=async(value,label)=>{
+    const y=machineDiv(machineSub(value,1),machineAdd(value,1));
+    const y2=machineMul(y,y);
+    let term=y,sum=0;
+
+    for(let n=0;n<34;n++){
+      budgetTick(30,L(`ряд ln: член ${n+1}`,`ln series: term ${n+1}`));
+      const denom=2*n+1;
+      sum=machineAdd(sum,machineDiv(term,denom));
+      term=machineMul(term,y2);
+
+      const partial=machineMul(2,sum);
+      if(n<5||n%6===0||n===33){
+        think(
+          L(
+            `${label}: член ${n+1}, приближение ≈ ${clean(partial)}`,
+            `${label}: term ${n+1}, approximation ≈ ${clean(partial)}`
+          ),
+          "research"
+        );
+        await sleep(85);
+      }
+    }
+    return machineMul(2,sum);
+  };
+
+  const reduced=await series(x,"ln");
+  const ln2=shifts===0?0:await series(2,"ln(2)");
+  const result=machineAdd(reduced,machineMul(shifts,ln2));
+
+  setRunProgress(
+    `ln(${clean(original)}) ≈ ${clean(result)} после приведения диапазона`,
+    `ln(${clean(original)}) ≈ ${clean(result)} after range reduction`
+  );
+
+  return result;
 }
 async function applyFunction(id,z){
   const c=await ensureConcept(id);remember(c);const k=hashZ(z);
@@ -1060,6 +1159,10 @@ function qAtanReal(x){
   if(!Number.isFinite(x))return NaN;
   if(x<0)return -qAtanReal(-x);
   if(x>1)return machineSub(machineDiv(qPi(),2),qAtanReal(machineDiv(1,x)));
+  if(x>0.5){
+    const reduced=machineDiv(machineSub(x,1),machineAdd(x,1));
+    return machineAdd(machineDiv(qPi(),4),qAtanReal(reduced));
+  }
 
   let term=x,sum=0,xx=machineMul(x,x),sign=1;
   for(let n=0;n<26;n++){
@@ -1095,24 +1198,41 @@ function qRoot(value,n){
   if(!value.isReal()||!n.isReal()||!Number.isSafeInteger(n.re)||n.re===0)return new Complex(NaN,NaN);
 
   const degree=n.re;
-  if(value.re<0&&degree%2===0)return new Complex(0,qSqrtReal(-value.re));
+  const absDegree=absN(degree);
+  const target=absN(value.re);
 
-  const sign=value.re<0?-1:1,target=absN(value.re);
-  let g=target>=1?machineDiv(target,absN(degree)):1;
-  const p=absN(degree)-1;
+  if(target===0){
+    if(degree<0)return new Complex(NaN,NaN);
+    return new Complex(0,0);
+  }
+
+  let g=target>=1?machineDiv(target,absDegree):1;
+  const p=absDegree-1;
 
   for(let i=0;i<14;i++){
     budgetTick(12,L("итерация Ньютона для корня n-й степени","Newton iteration for an nth root"));
     let gp=1;
     for(let j=0;j<p;j++)gp=machineMul(gp,g);
     if(gp===0)gp=1e-12;
-    g=machineDiv(machineAdd(machineMul(p,g),machineDiv(target,gp)),absN(degree));
+    g=machineDiv(machineAdd(machineMul(p,g),machineDiv(target,gp)),absDegree);
   }
 
-  if(degree<0)g=machineDiv(1,g);
-  return new Complex(sign*g,0);
-}
+  let root;
+  if(value.re<0&&absDegree%2===0){
+    const angle=machineDiv(qPi(),absDegree);
+    const c=qCos(new Complex(angle,0));
+    const si=qSin(new Complex(angle,0));
+    root=new Complex(machineMul(g,c.re),machineMul(g,si.re));
+  }else{
+    root=new Complex(value.re<0?-g:g,0);
+  }
 
+  if(degree<0){
+    root=researchComplexCore("div",new Complex(1,0),root);
+  }
+
+  return root;
+}
 function qFactorial(n){
   if(!Number.isSafeInteger(n)||n<0||n>170)return NaN;
   let r=1;

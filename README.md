@@ -208,6 +208,8 @@ Every expression runs inside a cooperative work budget. Expensive algorithms rec
 
 The safety system is not a fallback calculator: unfinished work is never replaced with a hidden native answer.
 
+When an individual iterative subroutine already has a meaningful numerical approximation, it can stop locally at the last safe checkpoint and return that approximation to the surrounding expression. For example, if the next factorial term while deriving `e` becomes too expensive, the calculator keeps the approximation it actually derived and can still finish an outer expression such as `e + 1`.
+
 ## State and privacy
 
 There is no backend.
