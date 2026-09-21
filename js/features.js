@@ -1,6 +1,8 @@
 import { initHistory } from "./history.js";
 import { initBrainTransfer } from "./brain-transfer.js";
 import { initPlotTools } from "./plot-tools.js";
+import { initCasLayer } from "./cas/ui.js";
+import { applyBuildVersion } from "./version.js";
 import { copyText, featureToast, t } from "./ui-utils.js";
 
 function initResultTools() {
@@ -51,6 +53,8 @@ function initKeyboardShortcuts() {
 }
 
 function boot() {
+  applyBuildVersion();
+  initCasLayer();
   initHistory();
   initBrainTransfer();
   initPlotTools();
