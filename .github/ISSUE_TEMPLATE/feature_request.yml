@@ -1,0 +1,22 @@
+name: Feature request
+description: Propose a mathematical, memory, plotting, or UI improvement
+title: "feature: "
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: idea
+    attributes:
+      label: What should be added or changed?
+    validations:
+      required: true
+
+  - type: textarea
+    id: model
+    attributes:
+      label: How should it fit the project model?
+      description: Explain how the calculator should discover, learn, remember, or forget it.
+
+  - type: textarea
+    id: examples
+    attributes:
+      label: Example expressions or interactions

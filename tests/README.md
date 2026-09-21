@@ -1,40 +1,40 @@
 # Tests
 
-The project intentionally has no npm dependency tree.
+FAILED Calculator intentionally has no npm dependency tree.
 
-Run the smoke suite directly with Node.js:
+## Run everything
 
 ```text
-node tests/smoke.mjs
+node --test tests/*.test.mjs
 ```
 
-Check the production JavaScript syntax with:
+Check production JavaScript syntax separately with:
 
 ```text
 node --check app.js
 ```
 
-## How the smoke test works
+## Test layout
 
-The test reads the real `app.js`, evaluates the mathematical portion in a small Node
-`vm` context, and exposes selected internals only inside that temporary test runtime.
+- `runtime-harness.mjs`
+  - loads the real `app.js` into a small Node VM;
+  - exposes selected internals only inside the test runtime;
+  - does not maintain a second calculator implementation.
+- `parser.test.mjs`
+  - grammar, precedence, implicit multiplication, variables.
+- `numerics.test.mjs`
+  - constants, logs, atan, roots, factorial/combinatorics, budget recovery.
+- `symbolic.test.mjs`
+  - derivatives, antiderivatives, simplification, symbolic evaluation.
+- `static.test.mjs`
+  - DOM-id integrity, duplicate ids, build-version consistency, no `eval()` path.
 
-This avoids maintaining a second copy of the calculator implementation.
+## Philosophy
 
-The browser boot code is not executed by the smoke test.
+Regression tests should use the same implementation that ships in the browser.
 
-## Covered regressions
+Native `Math.*` calls are acceptable in tests as reference values. They should not
+replace the explicit runtime algorithms in production code.
 
-Current checks include:
-
-- implicit multiplication parsing;
-- unary-minus / power precedence;
-- approximations of `pi` and `e`;
-- logarithms across large ranges;
-- `atan(1)` and `atan(-1)`;
-- principal complex roots for negative real inputs;
-- preservation of the partial `e` approximation when the next factorial term exceeds
-  the computation budget.
-
-When a mathematical bug is found, add a minimal regression case here before or
+When a mathematical bug is found, add the smallest test that reproduces it before or
 together with the fix.

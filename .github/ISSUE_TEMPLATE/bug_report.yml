@@ -1,0 +1,42 @@
+name: Bug report
+description: Report broken calculator behavior or a regression
+title: "bug: "
+labels: ["bug"]
+body:
+  - type: textarea
+    id: expression
+    attributes:
+      label: Expression or action
+      description: What did you enter or click?
+      placeholder: "e + 1"
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+    validations:
+      required: true
+
+  - type: dropdown
+    id: language
+    attributes:
+      label: UI language
+      options:
+        - Russian
+        - English
+        - Both / not relevant
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Extra context
+      description: Browser, screenshots, memory state, or anything else that matters.
