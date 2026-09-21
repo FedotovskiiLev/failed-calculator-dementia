@@ -27,7 +27,9 @@ node --check app.js
 - `symbolic.test.mjs`
   - derivatives, antiderivatives, simplification, symbolic evaluation.
 - `static.test.mjs`
-  - DOM-id integrity, duplicate ids, build-version consistency, no `eval()` path.
+  - DOM-id integrity, duplicate ids, build-version consistency, no `eval()` path, feature-loader integrity.
+- `features.test.mjs`
+  - history storage parsing and brain-snapshot validation/round-trip.
 
 ## Philosophy
 

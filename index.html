@@ -7,6 +7,7 @@
   <meta name="description" content="FAILED Calculator — a Wolfram/Desmos-inspired calculator that discovers mathematics and slowly forgets it.">
   <title>FAILED Calculator — dementia build</title>
   <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="features.css">
 </head>
 <body>
 
@@ -24,7 +25,7 @@
 
 <div class="shell">
   <header class="titlebar">
-    <strong>FAILED_CALCULATOR.EXE — dementia build 1.1.1</strong>
+    <strong>FAILED_CALCULATOR.EXE — dementia build 1.2.0</strong>
     <div class="title-actions">
       <div class="lang-switch" aria-label="Language">
         <button id="langRu">RU</button><span>/</span><button id="langEn">EN</button>
@@ -101,6 +102,10 @@
                 <button data-template="sqrt(x)"><code>sqrt(x)</code></button>
                 <button data-template="root(x,n)"><code>root(x,n)</code></button>
                 <button data-template="abs(x)"><code>abs(x)</code></button>
+                <button data-template="re(2+5i)"><code>re(z)</code></button>
+                <button data-template="im(2+5i)"><code>im(z)</code></button>
+                <button data-template="conj(2+5i)"><code>conj(z)</code></button>
+                <button data-template="arg(1+i)"><code>arg(z)</code></button>
                 <button data-template="sin(x)"><code>sin(x)</code></button>
                 <button data-template="cos(x)"><code>cos(x)</code></button>
                 <button data-template="tan(x)"><code>tan(x)</code></button>
@@ -244,7 +249,7 @@
         <pre class="syntax">+ - * / % ^ !     2i  2pi  2(x+1)
 pi  e  i
 
-sqrt(x) root(x,n) abs(x)
+sqrt(x) root(x,n) abs(x) re(z) im(z) conj(z) arg(z)
 sin(x) cos(x) tan(x) asin(x) acos(x) atan(x)
 sinh(x) cosh(x) tanh(x)
 ln(x) log(x) log(x,b) exp(x)
@@ -268,12 +273,13 @@ min(a,b) max(a,b)</pre>
   </main>
 
   <footer class="footer">
-    <span>FAILED Calculator / dementia build 1.1.1</span>
+    <span>FAILED Calculator / dementia build 1.2.0</span>
     <span data-i18n="footer"></span>
   </footer>
 </div>
 
 <div id="toast" class="toast" role="status"></div>
 <script src="app.js"></script>
+<script type="module" src="js/features.js"></script>
 </body>
 </html>

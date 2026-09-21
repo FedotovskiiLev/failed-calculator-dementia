@@ -66,3 +66,16 @@ test("visible build version is consistent", () => {
     assert.equal(version, appVersion);
   }
 });
+
+test("feature layer is loaded after the calculator runtime", () => {
+  const appPos = html.indexOf('<script src="app.js"></script>');
+  const featurePos = html.indexOf('src="js/features.js"');
+  assert.ok(appPos >= 0);
+  assert.ok(featurePos > appPos);
+});
+
+test("complex inspection functions are part of the expression language", () => {
+  for (const name of ["re", "im", "conj", "arg"]) {
+    assert.match(app, new RegExp(`\\"${name}\\"`));
+  }
+});

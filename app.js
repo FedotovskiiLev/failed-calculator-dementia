@@ -2,7 +2,7 @@
 "use strict";
 
 /* ============================================================
-   FAILED CALCULATOR 1.1.1
+   FAILED CALCULATOR 1.2.0
 
    The expression evaluator deliberately does not dispatch an
    expression straight to JavaScript arithmetic or eval().
@@ -209,7 +209,7 @@ const hashZ = z => { z=Complex.from(z); return `${clean(z.re)}:${clean(z.im)}`; 
 
 /* ------------------------------ parser ----------------------------- */
 const ELEMENTARY_CALLS = new Set([
-  "sqrt","root","abs",
+  "sqrt","root","abs","re","im","conj","arg",
   "sin","cos","tan","asin","acos","atan",
   "sinh","cosh","tanh",
   "ln","log","exp",
@@ -402,6 +402,10 @@ const META = {
   sqrt:{kind:"fn",symbol:"√",ru:"квадратный корень",en:"square root"},
   root:{kind:"fn",symbol:"ⁿ√",ru:"корень n-й степени",en:"nth root"},
   abs:{kind:"fn",symbol:"|x|",ru:"модуль",en:"absolute value"},
+  re:{kind:"fn",symbol:"Re",ru:"действительная часть",en:"real part"},
+  im:{kind:"fn",symbol:"Im",ru:"мнимая часть",en:"imaginary part"},
+  conj:{kind:"fn",symbol:"z̄",ru:"комплексное сопряжение",en:"complex conjugate"},
+  arg:{kind:"fn",symbol:"arg",ru:"аргумент комплексного числа",en:"complex argument"},
   sin:{kind:"fn",symbol:"sin",ru:"синус",en:"sine"},
   cos:{kind:"fn",symbol:"cos",ru:"косинус",en:"cosine"},
   tan:{kind:"fn",symbol:"tan",ru:"тангенс",en:"tangent"},
@@ -453,7 +457,13 @@ function think(text,cls="memory"){
   d.innerHTML=`<span class="time">${new Date().toLocaleTimeString(lang==="ru"?"ru-RU":"en-GB",{hour12:false})}</span>${escapeHtml(text)}`;
   $("thinking").appendChild(d);$("thinking").scrollTop=$("thinking").scrollHeight;
 }
-function setResult(html){$("result").dataset.touched="1";$("result").innerHTML=html}
+function setResult(html){
+  $("result").dataset.touched="1";
+  $("result").innerHTML=html;
+  document.dispatchEvent(new CustomEvent("failed-calculator:result-change",{
+    detail:{html,text:$("result").textContent}
+  }));
+}
 function showProgress(on,p=0,label=""){$("progressWrap").classList.toggle("show",on);$("progressBar").style.width=`${clamp(p,0,100)}%`;$("progressLabel").textContent=label}
 function toast(text){const el=$("toast");el.textContent=text;el.classList.add("show");clearTimeout(toast.t);toast.t=setTimeout(()=>el.classList.remove("show"),4500)}
 function logObserver(message,type="memory"){observerLog.push({at:Date.now(),message,type});saveLog();renderObserver();recordStats(true)}
@@ -994,6 +1004,10 @@ async function applyFunction(id,z){
     }
   } else if(id==="abs"){
     await ensureConcept("sqrt");const s=machineAdd(machineMul(z.re,z.re),machineMul(z.im,z.im));value=new Complex(await deriveSqrtReal(s),0);
+  } else if(["re","im","conj","arg"].includes(id)){
+    value=qElementary(id,[z]);
+    think(L(`Исследую комплексное число через ${id}.`,`Inspecting the complex number through ${id}.`),"research");
+    await sleep(260);
   } else if(id==="sin"){await ensureConcept("add");await ensureConcept("mul");await ensureConcept("div");value=await taylorSin(z)}
   else if(id==="cos"){await ensureConcept("add");await ensureConcept("mul");await ensureConcept("div");value=await taylorCos(z)}
   else if(id==="tan"){await ensureConcept("sin");await ensureConcept("cos");await ensureConcept("div");const s=await taylorSin(z),co=await taylorCos(z);value=complexCore("div",s,co)}
@@ -1284,6 +1298,17 @@ function qElementary(name,args){
 
   if(name==="abs"){
     return new Complex(qSqrtReal(machineAdd(machineMul(a.re,a.re),machineMul(a.im,a.im))),0);
+  }
+
+  if(name==="re")return new Complex(a.re,0);
+  if(name==="im")return new Complex(a.im,0);
+  if(name==="conj")return new Complex(a.re,-a.im);
+  if(name==="arg"){
+    if(a.re===0&&a.im===0)return new Complex(NaN,NaN);
+    if(a.re===0)return new Complex(a.im>0?machineDiv(qPi(),2):-machineDiv(qPi(),2),0);
+    const base=qAtanReal(machineDiv(a.im,a.re));
+    if(a.re>0)return new Complex(base,0);
+    return new Complex(a.im>=0?machineAdd(base,qPi()):machineSub(base,qPi()),0);
   }
 
   if(name==="sin")return qSin(a);
@@ -2132,7 +2157,7 @@ async function applyCall(name,args){
   for(const node of args)values.push(await evalNode(node));
 
   if(
-    ["sqrt","abs","sin","cos","tan","asin","acos","atan","sinh","cosh","tanh","exp","ln","log"].includes(name) &&
+    ["sqrt","abs","re","im","conj","arg","sin","cos","tan","asin","acos","atan","sinh","cosh","tanh","exp","ln","log"].includes(name) &&
     args.length===1
   ){
     return await applyFunction(name,values[0]);
@@ -2396,6 +2421,15 @@ async function calculate(){
       );
     }
   }finally{
+    const resultEl=$("result");
+    document.dispatchEvent(new CustomEvent("failed-calculator:run-end",{
+      detail:{
+        source,
+        resultText:resultEl?.textContent||"",
+        resultHtml:resultEl?.innerHTML||"",
+        finishedAt:Date.now()
+      }
+    }));
     activeRun=null;
     busy=false;
     $("calculate").disabled=false;

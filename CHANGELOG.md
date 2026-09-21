@@ -4,6 +4,22 @@ Notable repository milestones are tracked here.
 
 ## Unreleased
 
+## 1.2.0
+
+### Added
+
+- Session calculation history with one-click rerun and Arrow Up / Arrow Down input navigation.
+- Local brain snapshot export/import covering mathematical memory, observer log, chart history, language, and calculation history.
+- Plot PNG export and quick range presets.
+- Complex-number inspection functions: `re(z)`, `im(z)`, `conj(z)`, and `arg(z)`.
+- Modular browser feature layer under `js/`.
+
+### Architecture
+
+- `app.js` now emits stable result/run events for external feature modules.
+- Feature code is separated from the mathematical runtime without adding npm, a bundler, or a backend.
+
+
 ### Engineering
 
 - Added GitHub Actions CI.

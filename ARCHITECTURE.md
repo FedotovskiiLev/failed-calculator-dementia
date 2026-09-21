@@ -3,9 +3,7 @@
 FAILED Calculator is intentionally a static browser application. There is no backend,
 package manager, bundler, framework, or build step.
 
-The current runtime is centered around `app.js`. This document describes both the
-current boundaries inside that file and the target module layout used for future
-refactoring.
+The mathematical runtime is still centered around `app.js`, while build 1.2.0 begins the real modular split with a separate browser feature layer under `js/`. This document describes the current boundaries and the target layout used for further refactoring.
 
 ## Runtime model
 
@@ -154,3 +152,19 @@ When extracting code from `app.js`:
 
 The repository should remain usable by opening it through any static HTTP server and
 should continue to deploy directly on GitHub Pages.
+
+
+## Build 1.2.0 module boundary
+
+The first production modules outside `app.js` are intentionally UI/session oriented:
+
+```text
+js/
+  features.js        # feature-layer bootstrap
+  history.js         # calculation history and input navigation
+  brain-transfer.js  # snapshot export/import and validation
+  plot-tools.js      # plot export and range presets
+  ui-utils.js        # shared locale/DOM helpers
+```
+
+`app.js` emits small custom DOM events (`failed-calculator:result-change` and `failed-calculator:run-end`) so feature modules can observe calculator results without reaching into private runtime variables. This event boundary is the pattern to preserve while the mathematical core is extracted later.

@@ -109,3 +109,24 @@ test("local e bailout leaves budget for the outer expression", async () => {
 
   near(e + 1, 3.71827876984127, 2e-6, "e + 1");
 });
+
+test("complex inspection functions expose real and imaginary parts", () => {
+  const z = new api.Complex(2, 5);
+  assert.equal(api.qElementary("re", [z]).re, 2);
+  assert.equal(api.qElementary("im", [z]).re, 5);
+});
+
+test("complex conjugation reverses only the imaginary part", () => {
+  const result = api.qElementary("conj", [new api.Complex(2, 5)]);
+  assert.equal(result.re, 2);
+  assert.equal(result.im, -5);
+});
+
+test("complex argument uses the correct quadrant", () => {
+  const q1 = api.qElementary("arg", [new api.Complex(1, 1)]);
+  const q2 = api.qElementary("arg", [new api.Complex(-1, 1)]);
+  const q3 = api.qElementary("arg", [new api.Complex(-1, -1)]);
+  near(q1.re, Math.PI / 4, 2e-5, "arg(1+i)");
+  near(q2.re, 3 * Math.PI / 4, 5e-5, "arg(-1+i)");
+  near(q3.re, -3 * Math.PI / 4, 5e-5, "arg(-1-i)");
+});

@@ -13,7 +13,7 @@ The project treats mathematics as knowledge the calculator has to acquire. The f
 - full Russian / English UI;
 - full-screen language choice on the first visit;
 - free-form mathematical input rather than a fixed operation selector;
-- complex numbers such as `2+5i`;
+- complex numbers such as `2+5i`, including `re`, `im`, `conj`, and `arg`;
 - explicit learned tables for small integer arithmetic;
 - step-by-step algorithms for constants and elementary functions;
 - symbolic differentiation for a useful subset of elementary expressions;
@@ -25,6 +25,9 @@ The project treats mathematics as knowledge the calculator has to acquire. The f
 - separate charts for the calculator's cognitive history;
 - progressive memory degradation rather than a single hard reset;
 - per-tab brain state stored in `sessionStorage`;
+- calculation history with one-click reruns and keyboard navigation;
+- brain snapshot export/import for moving or preserving a session;
+- plot PNG export and range presets;
 - no framework, backend, package manager, or build step.
 
 ## Expression language
@@ -60,6 +63,10 @@ i
 sqrt(x)
 root(x,n)
 abs(x)
+re(z)
+im(z)
+conj(z)
+arg(z)
 
 sin(x)
 cos(x)
@@ -142,6 +149,20 @@ sin(x)+x/4
 ```
 
 The **Graphs** tab contains both the mathematical plotter and the external observer's charts of memory health, stored knowledge, concept count, and dementia episodes.
+
+## Session tools
+
+Build 1.2.0 adds a browser-side feature layer without introducing a framework or backend.
+
+- successful and failed calculation attempts appear in a compact session history;
+- click a history entry to restore and rerun the expression;
+- use Arrow Up / Arrow Down in the expression field to walk through recent input;
+- export the current mathematical brain, observer log, chart history, language, and expression history to a JSON snapshot;
+- import a snapshot later to restore that session state;
+- export the current mathematical plot as PNG;
+- use quick plot-range presets such as `[-pi, pi]` and `[0, 2pi]`.
+
+Snapshots are local files. The application still has no backend and does not upload the brain anywhere.
 
 ## How the mathematical engine works
 
@@ -226,7 +247,16 @@ A new browser session starts with a fresh mathematical brain. Different visitors
 ```text
 index.html
 style.css
+features.css
 app.js
+js/
+  features.js
+  history.js
+  brain-transfer.js
+  plot-tools.js
+  ui-utils.js
+tests/
+.github/
 README.md
 README.ru.md
 .nojekyll

@@ -1,0 +1,146 @@
+.feature-heading-row,
+.feature-button-row,
+.feature-result-tools,
+.feature-plot-tools {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.feature-heading-row {
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.feature-heading-row h2,
+.feature-transfer h3 {
+  margin-top: 0;
+}
+
+.feature-button-row.wrap,
+.feature-plot-tools {
+  flex-wrap: wrap;
+}
+
+.feature-plot-tools {
+  justify-content: space-between;
+  margin: 12px 0 4px;
+}
+
+.feature-button {
+  border: 1px solid #56606b;
+  background: #15191e;
+  color: #dbe5bc;
+  padding: 9px 12px;
+  font: inherit;
+  cursor: pointer;
+}
+
+.feature-button:hover,
+.feature-button:focus-visible {
+  border-color: #cbd9a6;
+  outline: none;
+}
+
+.feature-button.subtle {
+  color: #a9b2bd;
+  background: #0e1115;
+}
+
+.feature-button.tiny {
+  padding: 5px 8px;
+  font-size: 11px;
+}
+
+.feature-history-card {
+  margin-top: 18px;
+}
+
+.feature-history-list {
+  display: grid;
+  gap: 8px;
+  max-height: 420px;
+  overflow: auto;
+}
+
+.feature-history-item {
+  display: grid;
+  grid-template-columns: minmax(140px, .8fr) minmax(180px, 1.2fr) auto;
+  gap: 10px;
+  align-items: center;
+  padding: 9px;
+  border: 1px solid #282e35;
+  background: #0b0e12;
+}
+
+.history-expression {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: #dbe5bc;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.history-result {
+  color: #89929d;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.history-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.feature-result-tools {
+  justify-content: flex-end;
+  margin-top: 8px;
+}
+
+.feature-transfer {
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid #303740;
+}
+
+.feature-inline-label {
+  color: #89929d;
+  font-size: 12px;
+}
+
+.feature-toast {
+  position: fixed;
+  right: 18px;
+  bottom: 18px;
+  z-index: 1000;
+  max-width: min(420px, calc(100vw - 36px));
+  padding: 11px 14px;
+  border: 1px solid #66715f;
+  background: #11161a;
+  color: #dbe5bc;
+  opacity: 0;
+  transform: translateY(8px);
+  pointer-events: none;
+  transition: .15s ease;
+}
+
+.feature-toast.show {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+@media (max-width: 780px) {
+  .feature-history-item {
+    grid-template-columns: 1fr;
+  }
+
+  .history-actions,
+  .feature-button-row {
+    flex-wrap: wrap;
+  }
+}
