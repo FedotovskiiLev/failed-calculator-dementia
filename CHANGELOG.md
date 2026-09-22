@@ -4,25 +4,19 @@ Notable repository milestones are tracked here.
 
 ## Unreleased
 
+## 1.8.0
+
+### Wolfram-style usability
+
+- Added automatic result pods for alternate forms, roots, derivatives, plots, and sample values.
+- Added a visible assumptions bar for choosing the main variable.
+- Added a compact Math Input keypad for common notation and templates.
+- Added live readable input preview and bracket mismatch warnings.
+- Added shareable query URLs using the `?q=` parameter.
+- Added automatic query restoration and execution when a shared URL is opened.
+- Added a one-click Share control to the workspace.
+- Kept the original dementia-aware result as the primary answer while related mathematical context appears underneath.
+
 ## 1.7.0
 
-### Workspace UX
-
-- Reordered the calculator around query → answer → follow-up actions.
-- Moved the reasoning trace below the result and collapsed it by default.
-- Collapsed the full syntax encyclopedia behind an explicit Reference control.
-- Removed the learned-concept sidebar from the permanent calculator layout; it is now an on-demand panel.
-- Made calculation history an on-demand panel instead of a permanent large card.
-- Added six task starters for calculation, equations, plots, derivatives, matrices, and data.
-- Added friendly input routing for common Russian/English task phrases and polynomial equations using `=`.
-- Added `/` as a focus-the-query shortcut.
-- Compacted the hero and calculator chrome on desktop and mobile.
-- Added a visible “interpreted as” line whenever friendly input is translated to formal syntax.
-
-### Fixed
-
-- Removed an accidental duplicate `let drawing = false` declaration in the 1.6 multi-plot renderer.
-
-## 1.6.0
-
-- Function exploration and data analysis.
+- Query-first workspace UX and friendly input.

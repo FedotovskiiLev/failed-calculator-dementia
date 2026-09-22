@@ -13,13 +13,17 @@ import { initThinkingControls } from "./ux/thinking-controls.js";
 import { initResultActions } from "./ux/result-actions.js";
 import { initErrorHelp } from "./ux/error-help.js";
 import { initWorkspace } from "./ux/workspace.js";
+import { initMathInput } from "./ux/math-input.js";
+import { initResultPods } from "./ux/result-pods.js";
+import { initQueryState } from "./ux/query-state.js";
 import { copyText, featureToast, t } from "./ui-utils.js";
 
 function ensureStyles() {
   for (const href of [
     "ux.css",
     "workbench.css",
-    "workspace.css"
+    "workspace.css",
+    "pods.css"
   ]) {
     if (
       document.querySelector(
@@ -39,7 +43,9 @@ function ensureStyles() {
 
 function initResultTools() {
   const result =
-    document.getElementById("result");
+    document.getElementById(
+      "result"
+    );
 
   if (!result) return;
 
@@ -149,8 +155,6 @@ function boot() {
   ensureStyles();
   applyBuildVersion();
 
-  // Friendly input must rewrite before the
-  // Workbench/CAS capture handlers read it.
   initSmartInput();
 
   initWorkbench();
@@ -171,9 +175,11 @@ function boot() {
   initResultActions();
   initErrorHelp();
 
-  // Workspace is last because it reorganizes
-  // blocks created by the feature modules above.
   initWorkspace();
+
+  initMathInput();
+  initResultPods();
+  initQueryState();
 
   initKeyboardShortcuts();
 }

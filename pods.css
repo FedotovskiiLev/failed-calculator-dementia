@@ -1,0 +1,211 @@
+/* 1.8 result pods + Math Input */
+
+.insight-pods{
+  display:grid;
+  gap:9px;
+  margin-top:8px
+}
+
+.insight-assumption{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  flex-wrap:wrap;
+  padding:8px 10px;
+  border:1px solid #46503f;
+  background:#11170f;
+  color:#9faa91;
+  font-size:11px
+}
+
+.insight-assumption-choices{
+  display:flex;
+  gap:4px;
+  flex-wrap:wrap
+}
+
+.insight-assumption-choices button{
+  min-width:30px;
+  border:1px solid #3e474f;
+  background:#0b0f12;
+  color:#9ca6af;
+  padding:4px 7px;
+  cursor:pointer
+}
+
+.insight-assumption-choices button.active{
+  border-color:#cbd9a6;
+  background:#cbd9a6;
+  color:#10130d
+}
+
+.insight-pod-grid{
+  display:grid;
+  grid-template-columns:
+    repeat(
+      2,
+      minmax(0,1fr)
+    );
+  gap:9px
+}
+
+.insight-pod{
+  border:1px solid #343c44;
+  background:#0b0f12;
+  min-width:0
+}
+
+.insight-pod-head{
+  padding:8px 10px;
+  border-bottom:1px solid #282f36;
+  background:#10151a
+}
+
+.insight-pod-head h3{
+  margin:0;
+  color:#8d98a3;
+  font-size:10px;
+  letter-spacing:.09em
+}
+
+.insight-pod-body{
+  padding:11px;
+  overflow:auto
+}
+
+.insight-form-grid{
+  display:grid;
+  gap:9px
+}
+
+.insight-form{
+  display:grid;
+  gap:3px
+}
+
+.insight-form small{
+  color:#68737e
+}
+
+.insight-form code,
+.insight-root-list code,
+.insight-large-expression{
+  color:#dbe5bc;
+  font-size:15px;
+  overflow-wrap:anywhere
+}
+
+.insight-root-list{
+  display:grid;
+  gap:7px
+}
+
+.insight-plot{
+  display:block;
+  width:100%;
+  height:auto;
+  max-height:240px;
+  border:1px solid #283038
+}
+
+.insight-pod-actions{
+  display:flex;
+  justify-content:flex-end;
+  margin-top:8px
+}
+
+.insight-mini-table{
+  width:100%;
+  border-collapse:collapse;
+  font-size:11px
+}
+
+.insight-mini-table th,
+.insight-mini-table td{
+  padding:5px 7px;
+  border-bottom:1px solid #252c33;
+  text-align:right
+}
+
+.insight-mini-table th{
+  color:#8c979f
+}
+
+.math-input-shell{
+  display:grid;
+  gap:5px;
+  margin-top:5px
+}
+
+.math-input-toolbar{
+  display:flex;
+  gap:4px;
+  flex-wrap:wrap;
+  padding:7px;
+  border:1px solid #353d45;
+  background:#0a0e11
+}
+
+.math-input-key{
+  min-width:38px;
+  border:1px solid #3a434c;
+  background:#12171c;
+  color:#d5ddd0;
+  padding:6px 8px;
+  cursor:pointer
+}
+
+.math-input-key:hover{
+  border-color:#899878;
+  color:#f0f5df
+}
+
+.math-input-preview{
+  display:flex;
+  gap:8px;
+  align-items:center;
+  min-height:25px;
+  color:#66717c;
+  font-size:10px
+}
+
+.math-input-preview code{
+  color:#abb5a0;
+  font-size:12px;
+  overflow-wrap:anywhere
+}
+
+.math-input-preview.bad{
+  color:#d39b7c
+}
+
+.math-input-preview.bad code{
+  color:#d7b39a
+}
+
+.math-input-status{
+  margin-left:auto
+}
+
+.workspace-tool-button.active{
+  color:#10130d;
+  background:#cbd9a6;
+  border-color:#cbd9a6
+}
+
+@media(max-width:760px){
+  .insight-pod-grid{
+    grid-template-columns:1fr
+  }
+
+  .math-input-preview{
+    align-items:flex-start;
+    flex-wrap:wrap
+  }
+
+  .math-input-status{
+    margin-left:0;
+    width:100%
+  }
+}
