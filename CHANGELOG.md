@@ -4,6 +4,24 @@ Notable repository milestones are tracked here.
 
 ## Unreleased
 
+## 1.4.0
+
+### UX
+
+- Added searchable autocomplete for mathematical functions and CAS commands.
+- Added a Ctrl/Cmd+K command palette with descriptions and ready-to-edit templates.
+- Added context-sensitive result actions for simplification, derivatives, plots, expansion, factorization, and polynomial roots.
+- Added friendly syntax diagnostics for common input mistakes.
+- Added a compact/expanded reasoning-trace toggle; compact mode is the default.
+- Added a persistent dementia on/off switch.
+
+### Dementia controls
+
+- When dementia is paused, automatic decay is continuously rescheduled before it can fire.
+- Manual brain-damage controls are disabled while dementia is paused.
+- Existing learned memory is preserved and normal decay resumes when the switch is turned back on.
+- Dementia and reasoning-view preferences are included in exported brain snapshots.
+
 ## 1.3.0
 
 ### Added

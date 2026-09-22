@@ -1,4 +1,4 @@
-export const BUILD_VERSION = "1.3.0";
+export const BUILD_VERSION = "1.4.0";
 
 export function applyBuildVersion() {
   const title = document.querySelector(".titlebar strong");

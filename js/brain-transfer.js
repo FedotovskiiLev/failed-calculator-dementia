@@ -6,13 +6,17 @@ import {
   featureToast,
   t
 } from "./ui-utils.js";
+import { DEMENTIA_ENABLED_KEY } from "./ux/dementia-controls.js";
+import { THINKING_COMPACT_KEY } from "./ux/thinking-controls.js";
 
 const KEYS = {
   brain: "failed-calculator-brain-v4",
   log: "failed-calculator-observer-log-v4",
   stats: "failed-calculator-stats-v4",
   language: "failed-calculator-language",
-  history: FEATURE_HISTORY_KEY
+  history: FEATURE_HISTORY_KEY,
+  dementiaEnabled: DEMENTIA_ENABLED_KEY,
+  thinkingCompact: THINKING_COMPACT_KEY
 };
 
 function safeParse(value, fallback) {
@@ -30,7 +34,9 @@ export function createSnapshot(storage = sessionStorage, languageStorage = local
       observerLog: safeParse(storage.getItem(KEYS.log), []),
       statsHistory: safeParse(storage.getItem(KEYS.stats), []),
       expressionHistory: safeParse(storage.getItem(KEYS.history), []),
-      language: languageStorage.getItem(KEYS.language) || "ru"
+      language: languageStorage.getItem(KEYS.language) || "ru",
+      dementiaEnabled: languageStorage.getItem(KEYS.dementiaEnabled) !== "false",
+      thinkingCompact: languageStorage.getItem(KEYS.thinkingCompact) !== "false"
     }
   };
 }
@@ -45,6 +51,14 @@ export function validateSnapshot(snapshot) {
   if (!Array.isArray(snapshot.state.observerLog)) return false;
   if (!Array.isArray(snapshot.state.statsHistory)) return false;
   if (!Array.isArray(snapshot.state.expressionHistory)) return false;
+  if (
+    snapshot.state.dementiaEnabled != null &&
+    typeof snapshot.state.dementiaEnabled !== "boolean"
+  ) return false;
+  if (
+    snapshot.state.thinkingCompact != null &&
+    typeof snapshot.state.thinkingCompact !== "boolean"
+  ) return false;
   return true;
 }
 
@@ -58,6 +72,13 @@ export function applySnapshot(snapshot, storage = sessionStorage, languageStorag
   storage.setItem(KEYS.stats, JSON.stringify(state.statsHistory));
   storage.setItem(KEYS.history, JSON.stringify(state.expressionHistory));
   languageStorage.setItem(KEYS.language, state.language);
+
+  if (typeof state.dementiaEnabled === "boolean") {
+    languageStorage.setItem(KEYS.dementiaEnabled, String(state.dementiaEnabled));
+  }
+  if (typeof state.thinkingCompact === "boolean") {
+    languageStorage.setItem(KEYS.thinkingCompact, String(state.thinkingCompact));
+  }
 }
 
 export function initBrainTransfer() {
@@ -102,8 +123,8 @@ export function initBrainTransfer() {
   const localize = () => {
     title.textContent = t("СНИМОК МОЗГА", "BRAIN SNAPSHOT");
     copy.textContent = t(
-      "Экспортируйте выученную математику, журнал и историю этой вкладки в локальный JSON-файл или восстановите их позже.",
-      "Export the learned mathematics, observer log, and this tab's history to a local JSON file, or restore them later."
+      "Экспортируйте выученную математику, журнал, историю и настройки этой вкладки в локальный JSON-файл или восстановите их позже.",
+      "Export learned mathematics, observer log, history, and local settings to a JSON file, or restore them later."
     );
     exportButton.textContent = t("ЭКСПОРТ JSON", "EXPORT JSON");
     importButton.textContent = t("ИМПОРТ JSON", "IMPORT JSON");

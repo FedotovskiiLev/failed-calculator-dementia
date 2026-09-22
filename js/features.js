@@ -3,7 +3,21 @@ import { initBrainTransfer } from "./brain-transfer.js";
 import { initPlotTools } from "./plot-tools.js";
 import { initCasLayer } from "./cas/ui.js";
 import { applyBuildVersion } from "./version.js";
+import { initAutocomplete } from "./ux/autocomplete.js";
+import { initCommandPalette } from "./ux/command-palette.js";
+import { initDementiaControls } from "./ux/dementia-controls.js";
+import { initThinkingControls } from "./ux/thinking-controls.js";
+import { initResultActions } from "./ux/result-actions.js";
+import { initErrorHelp } from "./ux/error-help.js";
 import { copyText, featureToast, t } from "./ui-utils.js";
+
+function ensureUxStyles() {
+  if (document.querySelector('link[href="ux.css"]')) return;
+  const link = document.createElement("link");
+  link.rel = "stylesheet";
+  link.href = "ux.css";
+  document.head.appendChild(link);
+}
 
 function initResultTools() {
   const result = document.getElementById("result");
@@ -53,12 +67,19 @@ function initKeyboardShortcuts() {
 }
 
 function boot() {
+  ensureUxStyles();
   applyBuildVersion();
   initCasLayer();
+  initAutocomplete();
+  initCommandPalette();
+  initDementiaControls();
+  initThinkingControls();
   initHistory();
   initBrainTransfer();
   initPlotTools();
   initResultTools();
+  initResultActions();
+  initErrorHelp();
   initKeyboardShortcuts();
 }
 
