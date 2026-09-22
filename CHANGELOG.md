@@ -4,30 +4,25 @@ Notable repository milestones are tracked here.
 
 ## Unreleased
 
+## 1.7.0
+
+### Workspace UX
+
+- Reordered the calculator around query → answer → follow-up actions.
+- Moved the reasoning trace below the result and collapsed it by default.
+- Collapsed the full syntax encyclopedia behind an explicit Reference control.
+- Removed the learned-concept sidebar from the permanent calculator layout; it is now an on-demand panel.
+- Made calculation history an on-demand panel instead of a permanent large card.
+- Added six task starters for calculation, equations, plots, derivatives, matrices, and data.
+- Added friendly input routing for common Russian/English task phrases and polynomial equations using `=`.
+- Added `/` as a focus-the-query shortcut.
+- Compacted the hero and calculator chrome on desktop and mobile.
+- Added a visible “interpreted as” line whenever friendly input is translated to formal syntax.
+
+### Fixed
+
+- Removed an accidental duplicate `let drawing = false` declaration in the 1.6 multi-plot renderer.
+
 ## 1.6.0
 
-### Explore & Data
-
-- Added value tables for functions over a range.
-- Added multi-curve plotting for up to eight functions on one result canvas.
-- Added Newton numerical solving using symbolic derivatives.
-- Added golden-section interval minimization.
-- Added mean, median, variance, standard deviation, quantiles, and descriptive-statistics summaries.
-- Added simple linear regression with fitted equation and R².
-- Added structured statistics/table/root/minimum result cards.
-- Added new commands to autocomplete and the command palette.
-- Added table as a contextual follow-up action for expressions in `x`.
-
-## 1.5.0
-
-### Mathematical Workbench
-
-- Added matrix determinant, inverse, transpose, multiplication, rank, and trace.
-- Added 2×2 eigenvalue calculation.
-- Added vector dot product, cross product, and norm.
-- Added Gaussian-elimination linear-system solving with named variables.
-- Added Taylor-series generation using the existing symbolic derivative engine plus an explicit numerical coefficient evaluator.
-- Added structured matrix/vector/system result cards.
-- Added interactive x-axis plot zoom, pan, and cursor-coordinate readout.
-- Added Workbench commands to autocomplete and the Ctrl/Cmd+K command palette.
-- Added Taylor as a contextual follow-up action for expressions in `x`.
+- Function exploration and data analysis.

@@ -1,11 +1,15 @@
-export const BUILD_VERSION = "1.6.0";
+export const BUILD_VERSION = "1.7.0";
 
 export function applyBuildVersion() {
   const title =
-    document.querySelector(".titlebar strong");
+    document.querySelector(
+      ".titlebar strong"
+    );
 
   const footer =
-    document.querySelector(".footer span:first-child");
+    document.querySelector(
+      ".footer span:first-child"
+    );
 
   if (title) {
     title.textContent =
