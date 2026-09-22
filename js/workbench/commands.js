@@ -12,6 +12,24 @@ import {
   transpose
 } from "./linear-algebra.js";
 import { taylorSeries } from "./taylor.js";
+import {
+  mean,
+  median,
+  variance,
+  stdev,
+  quantile,
+  summary,
+  linearRegression
+} from "./statistics.js";
+import {
+  numericSolve,
+  minimizeGolden
+} from "./numerical.js";
+import {
+  valueTable,
+  parseExpressionList,
+  sampleFunctions
+} from "./explore.js";
 
 const COMMANDS = new Set([
   "det",
@@ -25,7 +43,18 @@ const COMMANDS = new Set([
   "norm",
   "linsolve",
   "taylor",
-  "eigen2"
+  "eigen2",
+  "mean",
+  "median",
+  "variance",
+  "stdev",
+  "quantile",
+  "summary",
+  "linreg",
+  "table",
+  "multiplot",
+  "nsolve",
+  "minimize"
 ]);
 
 export function splitArguments(text) {
@@ -72,7 +101,7 @@ function literal(text) {
     return JSON.parse(text);
   } catch {
     throw new Error(
-      "Matrix/vector literals use bracket syntax, for example [[1,2],[3,4]]"
+      "Data literals use bracket syntax, for example [1,2,3] or [[1,2],[3,4]]"
     );
   }
 }
@@ -103,7 +132,6 @@ function vectorNames(text, count) {
 
 function formatComplex(value) {
   if (typeof value === "number") return String(value);
-
   if (Math.abs(value.im) < 1e-12) return String(value.re);
 
   const sign = value.im >= 0 ? "+" : "-";
@@ -118,30 +146,17 @@ export function executeWorkbenchCommand(source) {
 
   if (name === "det") {
     if (args.length !== 1) throw new Error("det(matrix)");
-    const matrix = literal(args[0]);
-    return {
-      kind:"scalar",
-      title:"det(A)",
-      value:determinant(matrix)
-    };
+    return { kind:"scalar", title:"det(A)", value:determinant(literal(args[0])) };
   }
 
   if (name === "inverse") {
     if (args.length !== 1) throw new Error("inverse(matrix)");
-    return {
-      kind:"matrix",
-      title:"A⁻¹",
-      value:inverse(literal(args[0]))
-    };
+    return { kind:"matrix", title:"A⁻¹", value:inverse(literal(args[0])) };
   }
 
   if (name === "transpose") {
     if (args.length !== 1) throw new Error("transpose(matrix)");
-    return {
-      kind:"matrix",
-      title:"Aᵀ",
-      value:transpose(literal(args[0]))
-    };
+    return { kind:"matrix", title:"Aᵀ", value:transpose(literal(args[0])) };
   }
 
   if (name === "matmul") {
@@ -155,20 +170,12 @@ export function executeWorkbenchCommand(source) {
 
   if (name === "rank") {
     if (args.length !== 1) throw new Error("rank(matrix)");
-    return {
-      kind:"scalar",
-      title:"rank(A)",
-      value:rank(literal(args[0]))
-    };
+    return { kind:"scalar", title:"rank(A)", value:rank(literal(args[0])) };
   }
 
   if (name === "trace") {
     if (args.length !== 1) throw new Error("trace(matrix)");
-    return {
-      kind:"scalar",
-      title:"tr(A)",
-      value:trace(literal(args[0]))
-    };
+    return { kind:"scalar", title:"tr(A)", value:trace(literal(args[0])) };
   }
 
   if (name === "dot") {
@@ -191,11 +198,7 @@ export function executeWorkbenchCommand(source) {
 
   if (name === "norm") {
     if (args.length !== 1) throw new Error("norm(v)");
-    return {
-      kind:"scalar",
-      title:"‖v‖",
-      value:norm(literal(args[0]))
-    };
+    return { kind:"scalar", title:"‖v‖", value:norm(literal(args[0])) };
   }
 
   if (name === "linsolve") {
@@ -203,9 +206,7 @@ export function executeWorkbenchCommand(source) {
       throw new Error("linsolve(A,b [, [x,y,...]])");
     }
 
-    const matrix = literal(args[0]);
-    const rhs = literal(args[1]);
-    const solution = solveLinear(matrix, rhs);
+    const solution = solveLinear(literal(args[0]), literal(args[1]));
     const names = vectorNames(args[2], solution.length);
 
     return {
@@ -213,19 +214,17 @@ export function executeWorkbenchCommand(source) {
       title:"linear system",
       value:solution,
       variables:names,
-      equations:names.map((name, i) => `${name} = ${solution[i]}`)
+      equations:names.map((variable, i) => `${variable} = ${solution[i]}`)
     };
   }
 
   if (name === "eigen2") {
     if (args.length !== 1) throw new Error("eigen2(matrix)");
 
-    const values = eigenvalues2(literal(args[0]));
-
     return {
       kind:"vector",
       title:"eigenvalues",
-      value:values.map(formatComplex)
+      value:eigenvalues2(literal(args[0])).map(formatComplex)
     };
   }
 
@@ -253,6 +252,119 @@ export function executeWorkbenchCommand(source) {
       variable,
       center,
       order
+    };
+  }
+
+  if (name === "mean") {
+    if (args.length !== 1) throw new Error("mean([data])");
+    return { kind:"scalar", title:"mean", value:mean(literal(args[0])) };
+  }
+
+  if (name === "median") {
+    if (args.length !== 1) throw new Error("median([data])");
+    return { kind:"scalar", title:"median", value:median(literal(args[0])) };
+  }
+
+  if (name === "variance") {
+    if (args.length !== 1) throw new Error("variance([data])");
+    return { kind:"scalar", title:"variance", value:variance(literal(args[0])) };
+  }
+
+  if (name === "stdev") {
+    if (args.length !== 1) throw new Error("stdev([data])");
+    return { kind:"scalar", title:"standard deviation", value:stdev(literal(args[0])) };
+  }
+
+  if (name === "quantile") {
+    if (args.length !== 2) throw new Error("quantile([data],q)");
+    return {
+      kind:"scalar",
+      title:`quantile q=${args[1]}`,
+      value:quantile(literal(args[0]), Number(args[1]))
+    };
+  }
+
+  if (name === "summary") {
+    if (args.length !== 1) throw new Error("summary([data])");
+    return {
+      kind:"summary",
+      title:"descriptive statistics",
+      value:summary(literal(args[0]))
+    };
+  }
+
+  if (name === "linreg") {
+    if (args.length !== 2) throw new Error("linreg([x],[y])");
+
+    return {
+      kind:"regression",
+      title:"linear regression",
+      value:linearRegression(literal(args[0]), literal(args[1])),
+      x:literal(args[0]),
+      y:literal(args[1])
+    };
+  }
+
+  if (name === "table") {
+    if (args.length !== 5) throw new Error("table(expr,variable,start,end,step)");
+
+    return {
+      kind:"table",
+      title:`value table: ${args[0]}`,
+      columns:[args[1].trim(), args[0]],
+      value:valueTable(
+        args[0],
+        args[1].trim(),
+        Number(args[2]),
+        Number(args[3]),
+        Number(args[4])
+      )
+    };
+  }
+
+  if (name === "multiplot") {
+    if (args.length < 4 || args.length > 5) {
+      throw new Error("multiplot([f(x),g(x)],variable,start,end [, samples])");
+    }
+
+    const expressions = parseExpressionList(args[0]);
+    const sampled = sampleFunctions(
+      expressions,
+      args[1].trim(),
+      Number(args[2]),
+      Number(args[3]),
+      args[4] == null ? 480 : Number(args[4])
+    );
+
+    return {
+      kind:"multiplot",
+      title:"multiple functions",
+      value:sampled
+    };
+  }
+
+  if (name === "nsolve") {
+    if (args.length !== 3) throw new Error("nsolve(expr,variable,guess)");
+
+    return {
+      kind:"root",
+      title:"Newton solve",
+      value:numericSolve(args[0], args[1].trim(), Number(args[2]))
+    };
+  }
+
+  if (name === "minimize") {
+    if (args.length !== 4) throw new Error("minimize(expr,variable,left,right)");
+
+    return {
+      kind:"minimum",
+      title:"interval minimum",
+      value:minimizeGolden(
+        args[0],
+        args[1].trim(),
+        Number(args[2]),
+        Number(args[3])
+      )
     };
   }
 

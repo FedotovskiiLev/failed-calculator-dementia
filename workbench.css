@@ -14,3 +14,38 @@
 #mathPlotCanvas.dragging{cursor:grabbing}
 .wb-plot-tooltip{position:absolute;z-index:10;pointer-events:none;background:#080b0e;border:1px solid #4a535e;color:#dbe5bc;padding:5px 7px;font-size:10px}
 .wb-plot-hint{margin-top:6px;color:#66717d;font-size:10px}
+.wb-summary-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(120px,1fr));
+  gap:8px
+}
+.wb-stat{
+  border:1px solid #2c343c;
+  background:#0b0f12;
+  padding:10px
+}
+.wb-stat small{
+  display:block;
+  color:#78838e;
+  margin-bottom:5px
+}
+.wb-stat strong{
+  color:#dbe5bc;
+  font-size:16px
+}
+.wb-table-wrap{max-height:420px;overflow:auto;border:1px solid #303740}
+.wb-data-table{width:100%;border-collapse:collapse}
+.wb-data-table th,.wb-data-table td{
+  padding:7px 10px;
+  border-bottom:1px solid #242a31;
+  text-align:right
+}
+.wb-data-table th{
+  position:sticky;
+  top:0;
+  background:#11161b;
+  color:#aab49b
+}
+.wb-multiplot-host{display:grid;gap:8px}
+.wb-multiplot-canvas{width:100%;height:auto;border:1px solid #303740;background:#090c0f}
+.wb-legend{display:flex;gap:10px 16px;flex-wrap:wrap;color:#89939d;font-size:10px}

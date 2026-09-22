@@ -51,7 +51,18 @@ export const COMMAND_CATALOG = [
   { name:"cross", template:"cross([1,0,0],[0,1,0])", category:"vector", ru:"векторное произведение", en:"cross product" },
   { name:"norm", template:"norm([3,4])", category:"vector", ru:"норма вектора", en:"vector norm" },
   { name:"linsolve", template:"linsolve([[2,1],[1,-1]],[5,1],[x,y])", category:"systems", ru:"решить линейную систему", en:"solve linear system" },
-  { name:"taylor", template:"taylor(sin(x),x,0,7)", category:"series", ru:"ряд Тейлора", en:"Taylor series" }
+  { name:"taylor", template:"taylor(sin(x),x,0,7)", category:"series", ru:"ряд Тейлора", en:"Taylor series" },
+{ name:"mean", template:"mean([1,2,3,4])", category:"statistics", ru:"среднее", en:"mean" },
+  { name:"median", template:"median([1,2,3,4])", category:"statistics", ru:"медиана", en:"median" },
+  { name:"variance", template:"variance([1,2,3,4])", category:"statistics", ru:"дисперсия", en:"variance" },
+  { name:"stdev", template:"stdev([1,2,3,4])", category:"statistics", ru:"стандартное отклонение", en:"standard deviation" },
+  { name:"quantile", template:"quantile([1,2,3,4],0.75)", category:"statistics", ru:"квантиль", en:"quantile" },
+  { name:"summary", template:"summary([1,2,3,4,5])", category:"statistics", ru:"описательная статистика", en:"descriptive statistics" },
+  { name:"linreg", template:"linreg([1,2,3],[2,4,6])", category:"statistics", ru:"линейная регрессия", en:"linear regression" },
+  { name:"table", template:"table(sin(x),x,-3,3,0.5)", category:"explore", ru:"таблица значений", en:"value table" },
+  { name:"multiplot", template:"multiplot([sin(x),cos(x)],x,-6,6)", category:"explore", ru:"несколько графиков", en:"multiple plots" },
+  { name:"nsolve", template:"nsolve(cos(x)-x,x,1)", category:"numerical", ru:"численное решение методом Ньютона", en:"Newton numerical solve" },
+  { name:"minimize", template:"minimize(x^4-3x^2+2,x,-3,3)", category:"numerical", ru:"минимум на интервале", en:"interval minimum" },
 ];
 
 function score(item, query) {

@@ -20,7 +20,7 @@ export function buildActions(source) {
   const hasX = /\bx\b/.test(source);
 
   const wrapped =
-    /^(?:simplify|expand|factor|subs|gradient|degree|collect|roots|plot|diff|integrate|limit|solve|det|inverse|transpose|matmul|rank|trace|dot|cross|norm|linsolve|taylor|eigen2)\s*\(/i.test(source);
+    /^(?:simplify|expand|factor|subs|gradient|degree|collect|roots|plot|diff|integrate|limit|solve|det|inverse|transpose|matmul|rank|trace|dot|cross|norm|linsolve|taylor|eigen2|mean|median|variance|stdev|quantile|summary|linreg|table|multiplot|nsolve|minimize)\s*\(/i.test(source);
 
   if (!wrapped) {
     actions.push({
