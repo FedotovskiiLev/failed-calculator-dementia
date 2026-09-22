@@ -1,24 +1,36 @@
 import {
   el,
+  featureToast,
   t
 } from "../ui-utils.js";
+import {
+  SLOT,
+  findNextSlot,
+  fractionTransform,
+  hasSlots,
+  powerTransform,
+  templateTransform
+} from "./structured-input-core.js";
+import {
+  structuredPreviewHtml
+} from "./structured-preview.js";
 
 const ITEMS = [
   ["π","pi"],
   ["e","e"],
   ["i","i"],
-  ["x²","x^2"],
-  ["xⁿ","x^n"],
-  ["√","sqrt(x)"],
-  ["a⁄b","(a)/(b)"],
-  ["|x|","abs(x)"],
-  ["sin","sin(x)"],
-  ["cos","cos(x)"],
-  ["tan","tan(x)"],
-  ["ln","ln(x)"],
-  ["d/dx","diff(f(x),x)"],
-  ["∫","integrate(f(x),x,a,b)"],
-  ["Σ","sum(f(n),n,a,b)"],
+  ["x²",`x^(${SLOT})`],
+  ["xⁿ",`^(${SLOT})`],
+  ["√",`sqrt(${SLOT})`],
+  ["a⁄b",`(${SLOT})/(${SLOT})`],
+  ["|x|",`abs(${SLOT})`],
+  ["sin",`sin(${SLOT})`],
+  ["cos",`cos(${SLOT})`],
+  ["tan",`tan(${SLOT})`],
+  ["ln",`ln(${SLOT})`],
+  ["d/dx",`diff(${SLOT},x)`],
+  ["∫",`integrate(${SLOT},x,${SLOT},${SLOT})`],
+  ["Σ",`sum(${SLOT},n,${SLOT},${SLOT})`],
   ["matrix","[[1,2],[3,4]]"]
 ];
 
@@ -26,144 +38,72 @@ export function bracketStatus(source) {
   const stack = [];
 
   for (const char of String(source)) {
-    if (
-      char === "(" ||
-      char === "["
-    ) {
+    if (char === "(" || char === "[") {
       stack.push(char);
     } else if (char === ")") {
-      if (
-        stack.pop() !== "("
-      ) {
-        return {
-          ok:false,
-          message:"parentheses"
-        };
+      if (stack.pop() !== "(") {
+        return { ok:false, message:"parentheses" };
       }
     } else if (char === "]") {
-      if (
-        stack.pop() !== "["
-      ) {
-        return {
-          ok:false,
-          message:"brackets"
-        };
+      if (stack.pop() !== "[") {
+        return { ok:false, message:"brackets" };
       }
     }
   }
 
   return {
     ok:stack.length === 0,
-    message:
-      stack.length
-        ? "unclosed"
-        : null
+    message:stack.length ? "unclosed" : null
   };
 }
 
-export function prettyMathPreview(source) {
-  let text =
-    String(source || "");
-
-  text = text
-    .replace(/\bpi\b/g,"π")
-    .replace(/\*/g,"·")
-    .replace(/\bsqrt\s*\(/g,"√(")
-    .replace(/\^2\b/g,"²")
-    .replace(/\^3\b/g,"³");
-
-  return text;
-}
-
-export function insertAtSelection(
-  input,
-  template
-) {
-  const start =
-    input.selectionStart ??
-    input.value.length;
-
-  const end =
-    input.selectionEnd ??
-    start;
-
-  const selected =
-    input.value.slice(
-      start,
-      end
-    );
-
-  let insertion =
-    template;
-
-  if (selected) {
-    if (
-      template.includes("f(x)")
-    ) {
-      insertion =
-        template.replace(
-          "f(x)",
-          selected
-        );
-    } else if (
-      template.includes("x")
-    ) {
-      insertion =
-        template.replace(
-          "x",
-          selected
-        );
-    }
-  }
-
-  input.value =
-    input.value.slice(0,start) +
-    insertion +
-    input.value.slice(end);
-
-  let placeholder =
-    insertion.search(
-      /\b(?:x|n|a|b|f)\b/
-    );
-
-  if (placeholder < 0) {
-    placeholder =
-      insertion.length;
-  }
-
-  const caret =
-    start + placeholder;
-
+function applyTransform(input, transform) {
+  input.value = transform.value;
   input.focus();
-
   input.setSelectionRange(
-    caret,
-    caret
+    transform.selectionStart,
+    transform.selectionEnd
   );
 
   input.dispatchEvent(
-    new Event(
-      "input",
-      { bubbles:true }
-    )
+    new Event("input", { bubbles:true })
   );
+}
+
+function selectSlot(input, direction = 1) {
+  const slot = findNextSlot(
+    input.value,
+    direction >= 0
+      ? input.selectionEnd
+      : input.selectionStart,
+    direction
+  );
+
+  if (!slot) return false;
+
+  input.focus();
+  input.setSelectionRange(
+    slot.start,
+    slot.end
+  );
+
+  return true;
 }
 
 export function initMathInput() {
   const input =
-    document.getElementById(
-      "expression"
-    );
+    document.getElementById("expression");
 
   const row =
-    document.querySelector(
-      ".expression-row"
-    );
+    document.querySelector(".expression-row");
 
-  if (!input || !row) return;
+  const calculate =
+    document.getElementById("calculate");
+
+  if (!input || !row || !calculate) return;
 
   const shell = el("div", {
-    className:"math-input-shell"
+    className:"math-input-shell structured-math-input"
   });
 
   const toolbar = el("div", {
@@ -172,10 +112,11 @@ export function initMathInput() {
 
   toolbar.hidden = true;
 
-  for (
-    const [label,template]
-    of ITEMS
-  ) {
+  const modeHelp = el("div", {
+    className:"structured-mode-help"
+  });
+
+  for (const [label,template] of ITEMS) {
     const key = el("button", {
       className:"math-input-key",
       type:"button",
@@ -187,9 +128,14 @@ export function initMathInput() {
       event => {
         event.preventDefault();
 
-        insertAtSelection(
+        applyTransform(
           input,
-          template
+          templateTransform(
+            input.value,
+            input.selectionStart,
+            input.selectionEnd,
+            template
+          )
         );
       }
     );
@@ -197,12 +143,17 @@ export function initMathInput() {
     toolbar.appendChild(key);
   }
 
+  toolbar.appendChild(modeHelp);
+
   const preview = el("div", {
-    className:"math-input-preview"
+    className:"math-input-preview structured-preview"
   });
 
   const previewLabel = el("span");
-  const previewValue = el("code");
+  const previewValue = el("div", {
+    className:"structured-preview-value"
+  });
+
   const status = el("span", {
     className:"math-input-status"
   });
@@ -214,88 +165,178 @@ export function initMathInput() {
   );
 
   const toggle = el("button", {
-    className:
-      "workspace-tool-button",
+    className:"workspace-tool-button",
     type:"button"
   });
+
+  const topTools =
+    document.querySelector(".workspace-top-tools");
+
+  topTools?.prepend(toggle);
+
+  shell.append(toolbar, preview);
+  row.after(shell);
+
+  const mathMode = () => !toolbar.hidden;
+
+  input.addEventListener(
+    "keydown",
+    event => {
+      if (!mathMode()) return;
+
+      if (event.key === "/") {
+        event.preventDefault();
+
+        applyTransform(
+          input,
+          fractionTransform(
+            input.value,
+            input.selectionStart,
+            input.selectionEnd
+          )
+        );
+
+        return;
+      }
+
+      if (event.key === "^") {
+        event.preventDefault();
+
+        applyTransform(
+          input,
+          powerTransform(
+            input.value,
+            input.selectionStart,
+            input.selectionEnd
+          )
+        );
+
+        return;
+      }
+
+      if (event.key === "Tab") {
+        if (selectSlot(
+          input,
+          event.shiftKey ? -1 : 1
+        )) {
+          event.preventDefault();
+        }
+      }
+    },
+    true
+  );
+
+  const blockIncomplete = event => {
+    if (!hasSlots(input.value)) return;
+
+    const first = findNextSlot(
+      input.value,
+      0,
+      1
+    );
+
+    if (first) {
+      input.focus();
+      input.setSelectionRange(
+        first.start,
+        first.end
+      );
+    }
+
+    featureToast(
+      t(
+        "Заполните все поля □ перед вычислением",
+        "Fill every □ slot before calculating"
+      )
+    );
+
+    event.preventDefault();
+    event.stopImmediatePropagation();
+  };
+
+  calculate.addEventListener(
+    "click",
+    blockIncomplete,
+    true
+  );
+
+  input.addEventListener(
+    "keydown",
+    event => {
+      if (
+        event.key === "Enter" &&
+        hasSlots(input.value)
+      ) {
+        blockIncomplete(event);
+      }
+    },
+    true
+  );
 
   toggle.addEventListener(
     "click",
     () => {
-      toolbar.hidden =
-        !toolbar.hidden;
+      toolbar.hidden = !toolbar.hidden;
 
       toggle.classList.toggle(
         "active",
-        !toolbar.hidden
+        mathMode()
       );
+
+      render();
     }
   );
 
-  const topTools =
-    document.querySelector(
-      ".workspace-top-tools"
-    );
-
-  topTools?.prepend(toggle);
-
-  shell.append(
-    toolbar,
-    preview
-  );
-
-  row.after(shell);
-
   const render = () => {
-    const source =
-      input.value;
+    const source = input.value;
+    const brackets = bracketStatus(source);
+    const incomplete = hasSlots(source);
 
-    const brackets =
-      bracketStatus(source);
-
-    previewValue.textContent =
-      prettyMathPreview(source) ||
-      "—";
+    previewValue.innerHTML =
+      structuredPreviewHtml(source);
 
     preview.classList.toggle(
       "bad",
-      !brackets.ok
+      !brackets.ok || incomplete
     );
 
-    status.textContent =
-      brackets.ok
-        ? ""
-        : t(
-            "проверьте скобки",
-            "check brackets"
-          );
+    if (incomplete) {
+      status.textContent =
+        t(
+          "Tab → следующее поле □",
+          "Tab → next □ slot"
+        );
+    } else if (!brackets.ok) {
+      status.textContent =
+        t(
+          "проверьте скобки",
+          "check brackets"
+        );
+    } else {
+      status.textContent = "";
+    }
 
     previewLabel.textContent =
-      t(
-        "ВИД:",
-        "PREVIEW:"
-      );
+      t("ВИД:", "PREVIEW:");
 
     toggle.textContent =
-      toolbar.hidden
+      mathMode()
         ? t(
-            "MATH INPUT",
-            "MATH INPUT"
-          )
-        : t(
             "СКРЫТЬ MATH",
             "HIDE MATH"
-          );
+          )
+        : "MATH INPUT";
+
+    modeHelp.textContent =
+      t(
+        "В режиме Math Input: / создаёт дробь, ^ создаёт степень, Tab переходит по □.",
+        "Math Input mode: / creates a fraction, ^ creates a power, Tab moves through □ slots."
+      );
   };
 
-  input.addEventListener(
-    "input",
-    render
-  );
+  input.addEventListener("input", render);
 
-  new MutationObserver(
-    render
-  ).observe(
+  new MutationObserver(render).observe(
     document.documentElement,
     {
       attributes:true,

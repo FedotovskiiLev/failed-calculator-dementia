@@ -1,0 +1,193 @@
+/* 2.0 structured math input + result states */
+
+.structured-mode-help{
+  flex:1 1 100%;
+  padding-top:5px;
+  color:#66717b;
+  font-size:9px
+}
+
+.structured-preview{
+  min-height:34px
+}
+
+.structured-preview-value{
+  display:flex;
+  align-items:center;
+  gap:2px;
+  flex-wrap:wrap;
+  min-height:26px;
+  color:#d8dfc9;
+  font-family:
+    "STIX Two Math",
+    "Cambria Math",
+    Georgia,
+    serif;
+  font-size:18px;
+  line-height:1.35;
+  overflow-wrap:anywhere
+}
+
+.structured-slot{
+  display:inline-grid;
+  place-items:center;
+  min-width:18px;
+  min-height:20px;
+  padding:0 3px;
+  border:1px solid #b3a15f;
+  background:#2b2514;
+  color:#e9d581;
+  font-family:inherit
+}
+
+.structured-frac{
+  display:inline-grid;
+  grid-template-rows:auto auto;
+  align-items:center;
+  text-align:center;
+  vertical-align:middle;
+  margin:0 3px
+}
+
+.structured-num{
+  border-bottom:1px solid currentColor;
+  padding:0 4px 2px
+}
+
+.structured-den{
+  padding:2px 4px 0
+}
+
+.structured-power{
+  font-size:.7em;
+  vertical-align:super;
+  margin-left:1px
+}
+
+.structured-root{
+  display:inline-flex;
+  align-items:flex-start
+}
+
+.structured-root-symbol{
+  font-size:1.25em;
+  line-height:1
+}
+
+.structured-radicand{
+  border-top:1px solid currentColor;
+  padding:0 3px
+}
+
+.input-interpretation-pod{
+  border:1px solid #343c44;
+  background:#0b0f12;
+  margin-bottom:3px
+}
+
+.input-interpretation-head{
+  display:flex;
+  justify-content:space-between;
+  gap:10px;
+  align-items:center;
+  padding:7px 10px;
+  border-bottom:1px solid #282f36;
+  background:#10151a
+}
+
+.input-interpretation-head h3{
+  margin:0;
+  color:#89949f;
+  font-size:10px;
+  letter-spacing:.08em
+}
+
+.input-interpretation-body{
+  display:grid;
+  gap:7px;
+  padding:10px
+}
+
+.input-interpretation-line{
+  display:grid;
+  grid-template-columns:90px minmax(0,1fr);
+  gap:10px;
+  align-items:start;
+  color:#727e88;
+  font-size:10px
+}
+
+.input-interpretation-line code{
+  color:#cbd9a6;
+  overflow-wrap:anywhere
+}
+
+.input-math-render{
+  color:#e0e6d5;
+  font-family:
+    "STIX Two Math",
+    "Cambria Math",
+    Georgia,
+    serif;
+  font-size:17px
+}
+
+.insight-pod-head{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:8px
+}
+
+.insight-pod-controls{
+  display:flex;
+  gap:4px;
+  align-items:center
+}
+
+.insight-pod-control,
+.insight-state-button{
+  border:0;
+  background:transparent;
+  color:#68747e;
+  font:inherit;
+  font-size:8px;
+  cursor:pointer;
+  padding:3px 5px
+}
+
+.insight-pod-control:hover,
+.insight-state-button:hover{
+  color:#dbe5bc;
+  background:#182018
+}
+
+.insight-pod-extra{
+  display:none
+}
+
+.insight-state-bar{
+  display:flex;
+  gap:5px;
+  justify-content:flex-end;
+  padding:1px 0
+}
+
+.insight-state-button{
+  border:1px solid #35403a;
+  background:#0d1210;
+  color:#99a68b;
+  font-size:9px;
+  padding:5px 8px
+}
+
+@media(max-width:680px){
+  .input-interpretation-line{
+    grid-template-columns:1fr;
+    gap:3px
+  }
+
+  .structured-preview-value{
+    font-size:16px
+  }
+}

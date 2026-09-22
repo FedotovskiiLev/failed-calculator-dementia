@@ -14,8 +14,12 @@ import { initResultActions } from "./ux/result-actions.js";
 import { initErrorHelp } from "./ux/error-help.js";
 import { initWorkspace } from "./ux/workspace.js";
 import { initMathInput } from "./ux/math-input.js";
+import { initInputInterpretation } from "./ux/input-interpretation.js";
 import { initResultPods } from "./ux/result-pods.js";
 import { initQueryState } from "./ux/query-state.js";
+import { initIntentPreview } from "./ux/intent-preview.js";
+import { initVisualBuilders } from "./ux/visual-builders.js";
+import { initStepPod } from "./ux/step-pod.js";
 import { copyText, featureToast, t } from "./ui-utils.js";
 
 function ensureStyles() {
@@ -23,7 +27,9 @@ function ensureStyles() {
     "ux.css",
     "workbench.css",
     "workspace.css",
-    "pods.css"
+    "pods.css",
+    "visual-tools.css",
+    "structured-input.css"
   ]) {
     if (
       document.querySelector(
@@ -178,7 +184,11 @@ function boot() {
   initWorkspace();
 
   initMathInput();
+  initInputInterpretation();
+  initIntentPreview();
   initResultPods();
+  initStepPod();
+  initVisualBuilders();
   initQueryState();
 
   initKeyboardShortcuts();

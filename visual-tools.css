@@ -1,0 +1,288 @@
+/* 1.9 visual workbench */
+
+.intent-preview{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  flex-wrap:wrap;
+  min-height:34px;
+  padding:5px 0;
+  color:#74808b;
+  font-size:10px
+}
+
+.intent-summary{
+  display:flex;
+  align-items:center;
+  gap:8px
+}
+
+.intent-badge{
+  border:1px solid #4e5947;
+  color:#b8c69e;
+  background:#10150f;
+  padding:4px 6px;
+  text-transform:uppercase;
+  letter-spacing:.06em
+}
+
+.intent-actions{
+  display:flex;
+  gap:4px;
+  flex-wrap:wrap
+}
+
+.intent-action{
+  border:1px solid #343d46;
+  background:#0d1115;
+  color:#919ba5;
+  padding:4px 7px;
+  font:inherit;
+  font-size:9px;
+  cursor:pointer
+}
+
+.intent-action:hover{
+  color:#dbe5bc;
+  border-color:#6a765e
+}
+
+.builder-overlay{
+  position:fixed;
+  inset:0;
+  z-index:15000;
+  background:rgba(3,5,7,.82);
+  padding:5vh 14px 14px;
+  overflow:auto
+}
+
+.builder-modal{
+  width:min(880px,100%);
+  margin:auto;
+  border:1px solid #56616c;
+  background:#0d1115;
+  box-shadow:0 30px 110px rgba(0,0,0,.7)
+}
+
+.builder-modal-head{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  padding:12px 14px;
+  border-bottom:1px solid #303840
+}
+
+.builder-modal-head h2{
+  margin:0!important;
+  font-size:16px!important
+}
+
+.builder-tabs{
+  display:flex;
+  gap:0;
+  border-bottom:1px solid #303840
+}
+
+.builder-tab{
+  flex:1;
+  border:0;
+  border-right:1px solid #303840;
+  background:#10151a;
+  color:#87919b;
+  padding:9px;
+  cursor:pointer;
+  font:inherit;
+  font-size:10px
+}
+
+.builder-tab:last-child{
+  border-right:0
+}
+
+.builder-tab.active{
+  color:#10130d;
+  background:#cbd9a6
+}
+
+.builder-body{
+  display:grid;
+  gap:14px;
+  padding:16px
+}
+
+.builder-controls{
+  display:flex;
+  align-items:center;
+  gap:7px;
+  flex-wrap:wrap;
+  color:#7d8791;
+  font-size:10px
+}
+
+.builder-controls select,
+.builder-variable{
+  border:1px solid #3b444d;
+  background:#090c0f;
+  color:#d2d8dc;
+  padding:6px 8px
+}
+
+.builder-matrix-grid{
+  display:grid;
+  grid-template-columns:repeat(var(--cols),minmax(66px,1fr));
+  gap:5px;
+  max-width:620px
+}
+
+.builder-cell{
+  width:100%;
+  min-width:0;
+  border:1px solid #3a434c;
+  background:#070a0d;
+  color:#dbe5bc;
+  padding:9px;
+  text-align:right;
+  font:inherit
+}
+
+.builder-system-header{
+  display:grid;
+  grid-template-columns:repeat(5,minmax(55px,1fr));
+  gap:5px;
+  margin-bottom:6px;
+  max-width:760px
+}
+
+.builder-system-grid{
+  display:grid;
+  grid-template-columns:repeat(var(--cols),minmax(55px,1fr)) 24px minmax(70px,1fr);
+  gap:5px;
+  align-items:center;
+  max-width:760px
+}
+
+.builder-equals{
+  text-align:center;
+  color:#79838d
+}
+
+.builder-field{
+  display:grid;
+  gap:5px
+}
+
+.builder-field>span{
+  color:#8d97a0;
+  font-size:10px
+}
+
+.builder-field textarea{
+  width:100%;
+  resize:vertical;
+  border:1px solid #3a434c;
+  background:#070a0d;
+  color:#dce2e6;
+  padding:10px;
+  font:inherit
+}
+
+.builder-action-row{
+  display:flex;
+  gap:7px;
+  flex-wrap:wrap
+}
+
+.step-pod{
+  margin-top:9px;
+  border:1px solid #343c44;
+  background:#0b0f12
+}
+
+.step-pod>summary{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:10px;
+  padding:9px 11px;
+  cursor:pointer;
+  color:#a5afb7
+}
+
+.step-pod>summary small{
+  color:#66717b
+}
+
+.step-body{
+  display:grid;
+  gap:0;
+  border-top:1px solid #293038
+}
+
+.step-entry{
+  display:grid;
+  grid-template-columns:28px minmax(0,1fr);
+  border-bottom:1px solid #242b32
+}
+
+.step-entry:last-child{
+  border-bottom:0
+}
+
+.step-number{
+  display:grid;
+  place-items:center;
+  color:#5f6a74;
+  border-right:1px solid #242b32;
+  font-size:10px
+}
+
+.step-row{
+  display:grid;
+  grid-template-columns:minmax(120px,.34fr) minmax(0,1fr);
+  gap:12px;
+  align-items:start;
+  padding:9px 10px
+}
+
+.step-label{
+  color:#7e8993;
+  font-size:10px
+}
+
+.step-row code{
+  color:#dbe5bc;
+  overflow-wrap:anywhere
+}
+
+@media(max-width:680px){
+  .intent-preview{
+    align-items:flex-start;
+    flex-direction:column
+  }
+
+  .builder-overlay{
+    padding:0
+  }
+
+  .builder-modal{
+    min-height:100vh;
+    border:0
+  }
+
+  .builder-tabs{
+    position:sticky;
+    top:0;
+    z-index:2
+  }
+
+  .builder-matrix-grid{
+    grid-template-columns:repeat(var(--cols),minmax(46px,1fr))
+  }
+
+  .step-row{
+    grid-template-columns:1fr;
+    gap:4px
+  }
+}
