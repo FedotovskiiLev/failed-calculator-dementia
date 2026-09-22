@@ -1,20 +1,25 @@
-export const BUILD_VERSION = "1.4.0";
+export const BUILD_VERSION = "1.5.0";
 
 export function applyBuildVersion() {
-  const title = document.querySelector(".titlebar strong");
-  const footer = document.querySelector(".footer span:first-child");
+  const title =
+    document.querySelector(".titlebar strong");
+
+  const footer =
+    document.querySelector(".footer span:first-child");
 
   if (title) {
-    title.textContent = title.textContent.replace(
-      /dementia build [0-9.]+/,
-      `dementia build ${BUILD_VERSION}`
-    );
+    title.textContent =
+      title.textContent.replace(
+        /dementia build [0-9.]+/,
+        `dementia build ${BUILD_VERSION}`
+      );
   }
 
   if (footer) {
-    footer.textContent = footer.textContent.replace(
-      /dementia build [0-9.]+/,
-      `dementia build ${BUILD_VERSION}`
-    );
+    footer.textContent =
+      footer.textContent.replace(
+        /dementia build [0-9.]+/,
+        `dementia build ${BUILD_VERSION}`
+      );
   }
 }

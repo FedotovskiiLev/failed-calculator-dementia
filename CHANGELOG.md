@@ -4,6 +4,25 @@ Notable repository milestones are tracked here.
 
 ## Unreleased
 
+## 1.5.0
+
+### Mathematical Workbench
+
+- Added matrix determinant, inverse, transpose, multiplication, rank, and trace.
+- Added 2×2 eigenvalue calculation.
+- Added vector dot product, cross product, and norm.
+- Added Gaussian-elimination linear-system solving with named variables.
+- Added Taylor-series generation using the existing symbolic derivative engine plus an explicit numerical coefficient evaluator.
+- Added structured matrix/vector/system result cards.
+- Added interactive x-axis plot zoom, pan, and cursor-coordinate readout.
+- Added Workbench commands to autocomplete and the Ctrl/Cmd+K command palette.
+- Added Taylor as a contextual follow-up action for expressions in `x`.
+
+### Architecture
+
+- Workbench code lives in `js/workbench/`; ordinary expressions still use the dementia-aware runtime.
+- Linear algebra, numerical coefficient evaluation, command parsing, result rendering, and plot interaction are separated into focused modules.
+
 ## 1.4.0
 
 ### UX
@@ -40,46 +59,3 @@ Notable repository milestones are tracked here.
 
 - New expression AST/parser/algebra/command modules live independently of the legacy `app.js` monolith.
 - Existing calculator input remains routed to the original dementia-aware numerical engine unless a CAS command is recognized.
-
-## 1.2.0
-
-### Added
-
-- Session calculation history with one-click rerun and Arrow Up / Arrow Down input navigation.
-- Local brain snapshot export/import covering mathematical memory, observer log, chart history, language, and calculation history.
-- Plot PNG export and quick range presets.
-- Complex-number inspection functions: `re(z)`, `im(z)`, `conj(z)`, and `arg(z)`.
-- Modular browser feature layer under `js/`.
-
-### Architecture
-
-- `app.js` now emits stable result/run events for external feature modules.
-- Feature code is separated from the mathematical runtime without adding npm, a bundler, or a backend.
-
-### Engineering
-
-- Added GitHub Actions CI.
-- Added regression tests for parser behavior, numerical functions, complex roots,
-  symbolic calculus, computation-budget recovery, and repository structure.
-- Added architecture and contribution documentation.
-- Added issue and pull-request templates.
-
-## 1.1.1
-
-### Fixed
-
-- Local computation-budget exhaustion while deriving `e` now preserves the last
-  meaningful approximation so surrounding expressions such as `e + 1` can continue.
-- Even nth roots of negative real values now return a principal complex root rather
-  than an incorrect purely imaginary shortcut.
-- Interactive logarithms now use range reduction.
-- Arctangent convergence around `x = 1` was improved.
-
-### Project
-
-- Added `.nojekyll` for GitHub Pages.
-- Updated the visible build number to `1.1.1`.
-
-## 1.1.0
-
-- Baseline public version before the correctness and CI passes.
